@@ -1,0 +1,237 @@
+{
+  "version": 1,
+  "title": "Install a local agent skill",
+  "purpose": "Explain how a missing local skill is installed and verified without overwriting existing configuration.",
+  "audience": "Developers maintaining the agent-skills marketplace",
+  "rootViewId": "overview",
+  "nodes": {
+    "select": {
+      "label": "Select skill",
+      "details": "Select product-brief from the catalog for a global Codex installation.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 430,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L430"
+        }
+      ]
+    },
+    "inventory": {
+      "label": "Inspect existing configuration",
+      "details": "Inspect visible skills and installer metadata. Preserve matching content; report conflicting content. Only a missing skill proceeds to installation.",
+      "references": [
+        {
+          "path": "scripts/setup_inventory.py",
+          "line": 155,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup_inventory.py#L155"
+        }
+      ]
+    },
+    "plan": {
+      "label": "Build installation plan",
+      "details": "Resolve the destination, determine existing state, and prepare the external installer command.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 183,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L183"
+        }
+      ]
+    },
+    "recheck": {
+      "label": "Recheck configuration",
+      "details": "Inspect configuration again before applying the plan. Preserve destinations that appeared or changed after preview.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 346,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L346"
+        }
+      ]
+    },
+    "install": {
+      "label": "Invoke installer",
+      "details": "Run the pinned Skills CLI with a copy operation. A failed installer reports failure without an installed receipt.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 368,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L368"
+        }
+      ]
+    },
+    "verify": {
+      "label": "Verify installed content",
+      "details": "Validate frontmatter, resources, and the installed content fingerprint against the local source.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 245,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L245"
+        }
+      ],
+      "childViewId": "verification"
+    },
+    "receipt": {
+      "label": "Save installation receipt",
+      "details": "Record the source, route, destination, and digest after successful verification.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 268,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L268"
+        }
+      ],
+      "data": {
+        "status": "installed"
+      }
+    },
+    "frontmatter": {
+      "label": "Check frontmatter",
+      "details": "Read the installed skill name and frontmatter.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 245,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L245"
+        }
+      ]
+    },
+    "resources": {
+      "label": "Check local resources",
+      "details": "Validate references to resources included with the installed skill.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 245,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L245"
+        }
+      ]
+    },
+    "fingerprint": {
+      "label": "Compare fingerprints",
+      "details": "Require the installed local skill fingerprint to match the source checkout.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 372,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L372"
+        }
+      ]
+    },
+    "failed": {
+      "label": "Report failure",
+      "details": "A failed installer or content mismatch is reported as failed. No installed receipt is written.",
+      "references": [
+        {
+          "path": "scripts/setup.py",
+          "line": 383,
+          "url": "https://github.com/ruohao1/agent-skills/blob/2368e346ec4bc9a86c793cb6f012d7fa5bb0c0aa/scripts/setup.py#L383"
+        }
+      ]
+    }
+  },
+  "views": {
+    "overview": {
+      "title": "Skill installation",
+      "detailLevel": "Workflow overview",
+      "nodeIds": [
+        "select",
+        "inventory",
+        "plan",
+        "recheck",
+        "install",
+        "verify",
+        "receipt"
+      ],
+      "edges": [
+        {
+          "id": "flow-0",
+          "source": "select",
+          "target": "inventory"
+        },
+        {
+          "id": "flow-1",
+          "source": "inventory",
+          "target": "plan"
+        },
+        {
+          "id": "flow-2",
+          "source": "plan",
+          "target": "recheck"
+        },
+        {
+          "id": "flow-3",
+          "source": "recheck",
+          "target": "install"
+        },
+        {
+          "id": "flow-4",
+          "source": "install",
+          "target": "verify"
+        },
+        {
+          "id": "flow-5",
+          "source": "verify",
+          "target": "receipt"
+        }
+      ],
+      "groups": [
+        {
+          "id": "prepare",
+          "label": "Prepare",
+          "nodeIds": [
+            "select",
+            "inventory",
+            "plan",
+            "recheck"
+          ]
+        },
+        {
+          "id": "apply",
+          "label": "Install",
+          "nodeIds": [
+            "install",
+            "verify",
+            "receipt"
+          ]
+        }
+      ]
+    },
+    "verification": {
+      "title": "Content verification",
+      "detailLevel": "Validation steps",
+      "nodeIds": [
+        "frontmatter",
+        "resources",
+        "fingerprint",
+        "receipt",
+        "failed"
+      ],
+      "edges": [
+        {
+          "id": "check-resources",
+          "source": "frontmatter",
+          "target": "resources"
+        },
+        {
+          "id": "check-fingerprint",
+          "source": "resources",
+          "target": "fingerprint"
+        },
+        {
+          "id": "matched",
+          "source": "fingerprint",
+          "target": "receipt",
+          "label": "Match"
+        },
+        {
+          "id": "mismatch",
+          "source": "fingerprint",
+          "target": "failed",
+          "label": "Mismatch"
+        }
+      ]
+    }
+  }
+}
