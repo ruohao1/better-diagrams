@@ -48,7 +48,7 @@ export async function compileView(input: ProjectInput, viewId: string, host: HTM
   const doc = parseDocument(input.document);
   const view = doc.views[viewId];
   if (!view) throw new Error('Missing view: ' + viewId);
-  const svg = element('svg', { xmlns: NS, class: 'diagram', role: 'img', 'aria-label': view.title });
+  const svg = element('svg', { xmlns: NS, class: 'diagram', role: 'group', 'aria-label': view.title });
   svg.style.width = '100%'; svg.style.height = '100%';
   svg.append(element('style', {}, defaultTheme + '\n' + input.themeCss));
   const scene = element('g', { 'data-scene': '' }); svg.append(scene);
