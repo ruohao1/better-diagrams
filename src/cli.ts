@@ -4,12 +4,19 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { readProject } from './project.ts';
 import { buildStandaloneHtml } from './html.ts';
+import { startDev } from './server.ts';
 
 export async function runCli(argv: string[]): Promise<number> {
   try {
     const {positionals,values}=parseArgs({args:argv,allowPositionals:true,options:{out:{type:'string'}}});
     const [command,root]=positionals;
-    if(positionals.length!==2 || !['check','build'].includes(command))throw new Error('Usage: better-diagrams check PROJECT | build PROJECT --out FILE.html');
+    if(positionals.length!==2 || !['check','build','dev'].includes(command))throw new Error('Usage: better-diagrams check PROJECT | build PROJECT --out FILE.html | dev PROJECT');
+    if(command==='dev'){
+      const session=await startDev(root,{editorJs:await readFile(new URL('./editor.js',import.meta.url),'utf8')});
+      process.stdout.write(JSON.stringify({ok:true,url:session.url})+'\n');
+      for(const signal of ['SIGINT','SIGTERM'] as const)process.once(signal,()=>{void session.close().catch(error=>{process.stderr.write(String(error)+'\n');process.exitCode=1;});});
+      return 0;
+    }
     const project=await readProject(root);
     if(command==='check')process.stdout.write(JSON.stringify({ok:true,checked:['document','asset-paths'],revision:project.revision})+'\n');
     else {
