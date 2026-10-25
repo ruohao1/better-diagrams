@@ -4,8 +4,7 @@ An agent-friendly diagram compiler and browser editor with automatic layout, exp
 
 The design and implementation plan are ready. Application implementation has not started.
 
-- [Design](docs/superpowers/specs/2026-10-25-diagram-authoring-design.md)
-- [Implementation plan](docs/superpowers/plans/2026-10-25-diagram-authoring.md)
+Local planning files live under `docs/superpowers/` and are excluded from Git.
 
 The plan has three delivery milestones:
 
@@ -14,5 +13,3 @@ The plan has three delivery milestones:
 3. **Customization and agent use:** SVG templates, CSS themes, packaged CLI, and an installable skill validated in Codex.
 
 Start with the source model and installation-flow fixture. Prove layout and clean export before building editor features.
-
-Keep the design and plan with the implementation branch and its pull request.
