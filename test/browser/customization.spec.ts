@@ -1,0 +1,74 @@
+import { test,expect } from './fixtures.ts';
+import { readFile,writeFile,mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import type { ProjectInput } from '../../src/model.ts';
+import { readProject } from '../../src/project.ts';
+import { buildStandaloneHtml } from '../../src/html.ts';
+
+const template='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 100"><defs><linearGradient id="color"><stop offset="0" stop-color="#f1f7ff"/><stop offset="1" stop-color="#dceaff"/></linearGradient><clipPath id="clip"><rect width="240" height="100" rx="20"/></clipPath></defs><rect class="node-body" width="240" height="100" rx="20" fill="url(#color)" clip-path="url(#clip)"/><text class="node-label" x="18" y="43" data-field="label"/><text x="18" y="74" data-field="data.status"/></svg>';
+
+test('instantiates inert SVG components with escaped text and unique local identifiers',async({page,session})=>{
+  await page.setContent('<main id="stage"></main>');await page.addScriptTag({path:'dist/test/compiler.js'});
+  const input:ProjectInput=structuredClone(session.input);input.templates={service:template};
+  input.document.nodes.select.template='service';input.document.nodes.inventory.template='service';
+  input.document.nodes.select.data={status:'<unsafe>'};
+  const result=await page.evaluate(async input=>{
+    const view=await DiagramCompiler.compileView(input,'overview',document.getElementById('stage')!);
+    const ids=[...view.svg.querySelectorAll('[id]')].map(el=>el.id);
+    return {ids,xml:DiagramCompiler.exportSvg(view)};
+  },input);
+  expect(new Set(result.ids).size).toBe(result.ids.length);
+  expect(result.xml).toContain('&lt;unsafe&gt;');expect(result.xml).not.toContain('foreignObject');
+});
+
+test('rejects active templates and non-self-contained stylesheet resources',async({page,session})=>{
+  await page.setContent('<main id="stage"></main>');await page.addScriptTag({path:'dist/test/compiler.js'});
+  await page.route(/^https?:/,route=>route.abort());
+  const bad=[template.replace('</svg>','<script>globalThis.pwned=true</script></svg>'),template.replace('</svg>','<foreignObject/></svg>'),template.replace('<rect class=','<rect onload="alert(1)" class='),template.replace('url(#color)','url(https://example.invalid/image.svg)'),template.replace('viewBox="0 0 240 100"','viewBox="0 0 0 0"')];
+  const results=await page.evaluate(async({input,bad})=>{
+    const errors:string[]=[];
+    for(const svg of bad){const changed=structuredClone(input);changed.document.nodes.select.template='service';changed.templates={service:svg};try{await DiagramCompiler.compileView(changed,'overview',document.getElementById('stage')!);errors.push('accepted');}catch(error){errors.push(String(error));}}
+    for(const themeCss of ['@import "https://example.invalid/style.css";','.node-body{fill:url(https://example.invalid/a.svg)}','.node-body{fill:u\\72l(https://example.invalid/a.svg)}']){
+      try{await DiagramCompiler.compileView({...input,themeCss},'overview',document.getElementById('stage')!);errors.push('accepted');}catch(error){errors.push(String(error));}
+    }
+    return {errors,executed:Reflect.has(globalThis,'pwned')};
+  },{input:session.input,bad});
+  expect(results.errors).not.toContain('accepted');expect(results.executed).toBe(false);
+});
+
+test('updates templates and geometry live without erasing an unsaved browser draft',async({page,session})=>{
+  await page.goto(session.url);await expect(page.getByRole('button',{name:'Select skill',exact:true})).toBeVisible();
+  await mkdir(join(session.dir,'templates'),{recursive:true});await writeFile(join(session.dir,'templates/service.svg'),template);
+  const changed=structuredClone(session.input.document);changed.nodes.select.template='service';changed.nodes.fingerprint.template='service';
+  await writeFile(join(session.dir,'diagram.json'),JSON.stringify(changed));
+  await expect(page.locator('[data-node-id="select"] .node-body')).toHaveAttribute('rx','20');
+  await page.getByRole('button',{name:'Select skill',exact:true}).click();
+  await page.getByLabel('Label',{exact:true}).fill('Unsaved styled node');
+  await writeFile(join(session.dir,'theme.css'),'.node-label{font-size:26px}.node-body{fill:#e8f5ff}');
+  await expect(page.locator('[data-node-id="select"] .node-label')).toHaveCSS('font-size','26px');
+  await expect(page.getByLabel('Label',{exact:true})).toHaveValue('Unsaved styled node');
+  await expect(page.getByLabel('Label',{exact:true})).toBeFocused();
+  const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Export SVG',exact:true}).click();
+  const download=await downloadPromise;const xml=await readFile((await download.path())!,'utf8');
+  expect(xml).toContain('Unsaved styled node');expect(xml).toContain('26px');expect(xml).not.toMatch(/foreignObject|bd-editor-bar|bd-details/);
+  await writeFile(join(session.dir,'templates/service.svg'),'<svg');
+  await expect(page.getByRole('alert')).toContainText('SVG');
+  await expect(page.getByRole('button',{name:'Unsaved styled node',exact:true})).toBeVisible();
+  await writeFile(join(session.dir,'templates/service.svg'),template);
+  await expect(page.getByRole('alert')).toBeHidden();
+  await expect(page.getByRole('status')).toHaveText('Unsaved changes');
+  await page.screenshot({path:'.superpowers/sdd/2026-10-25-diagram-authoring/custom-editor.png'});
+  const artifact=join(session.dir,'offline.html');
+  await writeFile(artifact,buildStandaloneHtml(await readProject(session.dir),await readFile('dist/viewer.js','utf8')));
+  const offline=await page.context().newPage();const requests:string[]=[];
+  offline.on('request',request=>{if(/^https?:/.test(request.url()))requests.push(request.url());});
+  await offline.route(/^https?:/,route=>route.abort());await offline.goto(pathToFileURL(artifact).href);
+  await offline.getByRole('button',{name:'Verify installed content',exact:true}).click();await offline.getByRole('button',{name:'Explore internals'}).click();
+  await expect(offline.locator('[data-node-id="fingerprint"] .node-body')).toHaveAttribute('rx','20');
+  await offline.getByRole('button',{name:'Zoom in',exact:true}).click();
+  const internalDownload=offline.waitForEvent('download');await offline.getByRole('button',{name:'Export SVG',exact:true}).click();
+  const internal=await readFile((await (await internalDownload).path())!,'utf8');
+  expect(internal).toContain('data-node-id="fingerprint"');expect(internal).not.toContain('data-node-id="install"');expect(requests).toEqual([]);
+  await offline.screenshot({path:'.superpowers/sdd/2026-10-25-diagram-authoring/custom-internals.png'});await offline.close();
+});

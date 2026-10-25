@@ -93,3 +93,13 @@ test('orders source events, preserves style-only drafts, and handles save echoes
   await expect(page.getByRole('status')).toContainText('Conflict');
   await expect(page.getByLabel('Label',{exact:true})).toHaveValue('Preserved after rejection');
 });
+
+test('reports invalid source as a validation error and recovers the live view',async({page,session})=>{
+  await page.goto(session.url);await expect(page.getByRole('button',{name:'Select skill',exact:true})).toBeVisible();
+  await writeFile(join(session.dir,'diagram.json'),'{broken');
+  await expect(page.getByRole('status')).toContainText('Source error:');
+  await expect(page.getByRole('status')).not.toContainText('Connection lost');
+  await expect(page.getByRole('button',{name:'Select skill',exact:true})).toBeVisible();
+  await writeFile(join(session.dir,'diagram.json'),JSON.stringify(session.input.document));
+  await expect(page.getByRole('status')).toHaveText('Updated from files');
+});

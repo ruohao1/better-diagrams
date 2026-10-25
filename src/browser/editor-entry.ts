@@ -13,7 +13,7 @@ async function start():Promise<void> {
     subscribe:listener=>{
       const events=new EventSource('/api/events');
       for(const type of ['snapshot','error'])events.addEventListener(type,event=>{if(event instanceof MessageEvent)listener(JSON.parse(event.data) as ProjectEvent);});
-      events.onerror=()=>listener({type:'error',message:'Connection lost; reconnecting. Your draft is retained.'});
+      events.onerror=event=>{if(!(event instanceof MessageEvent))listener({type:'error',message:'Connection lost; reconnecting. Your draft is retained.'});};
       return()=>events.close();
     },
   });

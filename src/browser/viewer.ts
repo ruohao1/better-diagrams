@@ -42,6 +42,8 @@ export async function mountViewer(host:HTMLElement,input:ProjectInput,options:{i
     const a=document.createElement('a');a.href=url;a.download=compiled.viewId+'.svg';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }));
   function renderDetails():void {
+    const active=document.activeElement;
+    const focus=details.contains(active) && (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement)?{id:active.id,start:active.selectionStart,end:active.selectionEnd}:undefined;
     details.replaceChildren();details.hidden=!selected;
     for(const node of compiled?.svg.querySelectorAll('[data-node-id]') ?? [])node.setAttribute('aria-pressed',String(node.getAttribute('data-node-id')===selected));
     if(!selected)return;
@@ -58,6 +60,7 @@ export async function mountViewer(host:HTMLElement,input:ProjectInput,options:{i
       }
     }
     if(node.childViewId){const footer=ui('div','bd-detail-footer');footer.append(button('Explore internals',async()=>{path.push(node.childViewId!);selected=undefined;await render(project);}));details.append(footer);}
+    if(focus?.id){const replacement=document.getElementById(focus.id);if(replacement instanceof HTMLInputElement || replacement instanceof HTMLTextAreaElement){replacement.focus();replacement.setSelectionRange(focus.start,focus.end);}}
   }
   async function render(next:ProjectInput):Promise<void> {
     const version=++generation;

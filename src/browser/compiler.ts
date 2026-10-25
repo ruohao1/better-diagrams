@@ -4,7 +4,7 @@ import { parseDocument } from '../model.ts';
 import type { ProjectInput } from '../model.ts';
 import defaultNode from './default-node.svg';
 import defaultTheme from './default-theme.css';
-import { instantiateNode } from './templates.ts';
+import { instantiateNode,validateTheme } from './templates.ts';
 
 const NS = 'http://www.w3.org/2000/svg';
 export type Bounds = { x: number; y: number; width: number; height: number };
@@ -46,6 +46,7 @@ function wrapLabel(svg: SVGSVGElement, label: string): void {
 
 export async function compileView(input: ProjectInput, viewId: string, host: HTMLElement): Promise<CompiledView> {
   const doc = parseDocument(input.document);
+  validateTheme(input.themeCss);
   const view = doc.views[viewId];
   if (!view) throw new Error('Missing view: ' + viewId);
   const svg = element('svg', { xmlns: NS, class: 'diagram', role: 'group', 'aria-label': view.title });
@@ -60,10 +61,12 @@ export async function compileView(input: ProjectInput, viewId: string, host: HTM
     const measured = new Map<string, { content: SVGSVGElement; box: DOMRect; width: number; height: number }>();
     for (const nodeId of view.nodeIds) {
       const node = doc.nodes[nodeId];
-      if (node.template && node.template !== 'default') throw new Error('Unknown template: ' + node.template);
-      const content = instantiateNode(defaultNode, nodeId, node);
-      scene.append(content); wrapLabel(content, node.label);
+      const name=node.template ?? 'default',custom=Object.hasOwn(input.templates,name);
+      if(!custom && name!=='default')throw new Error('Unknown template: '+name);
+      const content = instantiateNode(custom?input.templates[name]:defaultNode, nodeId, node);
+      scene.append(content); if(!custom)wrapLabel(content, node.label);
       const box = content.getBBox();
+      if(!Number.isFinite(box.width+box.height) || box.width<=0 || box.height<=0)throw new Error('SVG template has no visible geometry: '+nodeId);
       measured.set(nodeId, { content, box, width: box.width + 16, height: box.height + 16 });
       content.remove();
     }

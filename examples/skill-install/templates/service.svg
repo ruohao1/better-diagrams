@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 100">
+  <defs>
+    <linearGradient id="surface"><stop offset="0" stop-color="#f4f8ff"/><stop offset="1" stop-color="#e1edff"/></linearGradient>
+    <clipPath id="rounded"><rect width="240" height="100" rx="16"/></clipPath>
+  </defs>
+  <rect class="node-body" width="240" height="100" rx="16" fill="url(#surface)" clip-path="url(#rounded)"/>
+  <text class="node-label" x="18" y="42" data-field="label"/>
+  <text x="18" y="74" font-size="12" fill="#52647a" data-field="data.status"/>
+</svg>

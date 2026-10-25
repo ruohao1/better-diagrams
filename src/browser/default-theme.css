@@ -1,11 +1,11 @@
 .diagram { font-family: ui-sans-serif, system-ui, sans-serif; color: #253344; }
-.diagram .canvas-background { fill: #f8f9fb; }
-.diagram .node-body { fill: #fff; stroke: #aebccc; stroke-width: 1.5; }
-.diagram .node-label { fill: #172b46; font-size: 14px; font-weight: 600; }
-.diagram .group-body { fill: #edf1f6; stroke: #d6dee8; stroke-width: 1; }
-.diagram .group-label { fill: #53677e; font-size: 13px; font-weight: 650; letter-spacing: .4px; }
-.diagram .edge-path { fill: none; stroke: #8496ad; stroke-width: 1.5; }
-.diagram .arrow { fill: #8496ad; }
-.diagram .edge-label { fill: #405570; font-size: 12px; paint-order: stroke; stroke: #f8f9fb; stroke-width: 5px; stroke-linejoin: round; }
+.canvas-background { fill: #f8f9fb; }
+.node-body { fill: #fff; stroke: #aebccc; stroke-width: 1.5; }
+.node-label { fill: #172b46; font-size: 14px; font-weight: 600; }
+.group-body { fill: #edf1f6; stroke: #d6dee8; stroke-width: 1; }
+.group-label { fill: #53677e; font-size: 13px; font-weight: 650; letter-spacing: .4px; }
+.edge-path { fill: none; stroke: #8496ad; stroke-width: 1.5; }
+.arrow { fill: #8496ad; }
+.edge-label { fill: #405570; font-size: 12px; paint-order: stroke; stroke: #f8f9fb; stroke-width: 5px; stroke-linejoin: round; }
 .diagram [data-node-id] { cursor: pointer; outline: none; }
 .diagram [data-node-id]:focus .node-body, .diagram [data-node-id][aria-pressed=true] .node-body { stroke: #2563eb; stroke-width: 3; }

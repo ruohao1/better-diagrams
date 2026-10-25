@@ -75,13 +75,25 @@ export async function mountEditor(host:HTMLElement,initial:LiveSnapshot,transpor
     if(view.edges.some(edge=>edge.id===previous))edgeToRemove.value=previous;
   }
   function edited():void {dirty=true;say(pending?'Conflict: source changed. Download your draft before reloading.':'Unsaved changes');syncControls();}
-  async function preview():Promise<void> {
-    if(!viewer)return;
-    const active=document.activeElement;
-    const focus=active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement?{id:active.id,start:active.selectionStart,end:active.selectionEnd}:undefined;
-    try {await viewer.update({...base,document:draft});}catch(error){say('Preview error: '+(error instanceof Error?error.message:String(error)));}
-    if(focus?.id){const replacement=document.getElementById(focus.id);if(replacement instanceof HTMLInputElement || replacement instanceof HTMLTextAreaElement){replacement.focus();replacement.setSelectionRange(focus.start,focus.end);}}
-    choices();syncControls();
+  let rendering:Promise<void>|undefined;
+  let previewRequested=false;
+  let previewFailed=false;
+  function preview():Promise<void> {
+    if(!viewer)return Promise.resolve();
+    previewRequested=true;
+    if(rendering)return rendering;
+    const run=async()=>{
+      while(previewRequested){
+        previewRequested=false;
+        const revision=base.revision,serialized=JSON.stringify(draft);
+        try{await viewer!.update({...base,document:JSON.parse(serialized)});previewFailed=false;if(status.textContent?.startsWith('Preview error:'))say(dirty?'Unsaved changes':'Saved');}
+        catch(error){previewFailed=true;say('Preview error: '+(error instanceof Error?error.message:String(error)));}
+        choices();syncControls();
+        // DOM replacement can emit change again; rerender only if source or draft actually changed.
+        previewRequested=revision!==base.revision || serialized!==JSON.stringify(draft);
+      }
+    };
+    rendering=run().finally(()=>{rendering=undefined;});return rendering;
   }
   function details(parent:HTMLElement,nodeId:string):void {
     const node=draft.nodes[nodeId];const heading=document.createElement('h2');heading.textContent=node.label;parent.append(heading);
@@ -98,7 +110,7 @@ export async function mountEditor(host:HTMLElement,initial:LiveSnapshot,transpor
   async function applySnapshot(snapshot:LiveSnapshot):Promise<void> {
     if(dirty && snapshot.documentRevision!==base.documentRevision){pending=snapshot;say('Conflict: files changed. Download your draft or reload files.');syncControls();return;}
     base=snapshot;if(!dirty)draft=structuredClone(snapshot.document);
-    await preview();if(!dirty && base.sequence===snapshot.sequence)say('Updated from files');
+    await preview();if(!previewFailed && base.sequence===snapshot.sequence)say(dirty?'Unsaved changes':'Updated from files');
   }
   viewer=await mountViewer(viewHost,{...initial,document:draft},{renderDetails:details,onViewChange:id=>{viewId=id;choices();syncControls();}});
   const unsubscribe=transport.subscribe(event=>{
