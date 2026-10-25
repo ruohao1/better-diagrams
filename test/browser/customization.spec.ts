@@ -22,6 +22,21 @@ test('instantiates inert SVG components with escaped text and unique local ident
   expect(result.xml).toContain('&lt;unsafe&gt;');expect(result.xml).not.toContain('foreignObject');
 });
 
+test('keeps hyphenated node and template identifier pairs distinct',async({page,session})=>{
+  await page.setContent('<main id="stage"></main>');await page.addScriptTag({path:'dist/test/compiler.js'});
+  const input:ProjectInput=structuredClone(session.input);
+  input.templates={first:template.replace('id="color"','id="c"').replaceAll('#color','#c'),second:template.replace('id="color"','id="b-c"').replaceAll('#color','#b-c')};
+  input.document.nodes['a-b']={label:'First',details:'',template:'first'};
+  input.document.nodes.a={label:'Second',details:'',template:'second'};
+  input.document.views.collision={title:'Distinct identifiers',detailLevel:'Components',nodeIds:['a-b','a'],edges:[]};
+  const ids=await page.evaluate(async input=>{
+    const view=await DiagramCompiler.compileView(input,'collision',document.getElementById('stage')!);
+    const exported=new DOMParser().parseFromString(DiagramCompiler.exportSvg(view),'image/svg+xml');
+    return [...exported.querySelectorAll('[id]')].map(el=>el.id);
+  },input);
+  expect(new Set(ids).size).toBe(ids.length);
+});
+
 test('rejects active templates and non-self-contained stylesheet resources',async({page,session})=>{
   await page.setContent('<main id="stage"></main>');await page.addScriptTag({path:'dist/test/compiler.js'});
   await page.route(/^https?:/,route=>route.abort());

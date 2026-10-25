@@ -61,3 +61,32 @@ test('handles cycles, disconnected nodes, long Unicode labels and an empty view'
   expect(result.empty.width).toBeGreaterThan(0);
   expect(result.empty.height).toBeGreaterThan(0);
 });
+
+test('reserves actual geometry for Unicode, themed edge labels and group headings',async({page})=>{
+  const result=await page.evaluate(async()=>{
+    const host=document.getElementById('stage')!;
+    const problems:string[]=[];
+    for(const [name,label,themeCss,groupLabel] of [
+      ['unicode','日本語'.repeat(12),'',''],
+      ['theme','A very wide connection','.edge-label{font-size:36px}',''],
+      ['group','calls','.group-label{font-size:36px}','A long group heading — 日本語 '.repeat(8)],
+    ]){
+      const input={document:{version:1 as const,title:'Measured labels',purpose:'Keep text clear of nodes.',audience:'Maintainers',rootViewId:'overview',nodes:{a:{label:'Source',details:''},b:{label:'Destination',details:''}},views:{overview:{title:'Overview',detailLevel:'Components',nodeIds:['a','b'],edges:[{id:'call',source:'a',target:'b',label}],groups:groupLabel?[{id:'group',label:groupLabel,nodeIds:['a']}]:[]}}},themeCss,templates:{}};
+      const view=await DiagramCompiler.compileView(input,'overview',host);host.replaceChildren(view.svg);
+      const edge=view.svg.querySelector<SVGTextElement>('.edge-label')!.getBoundingClientRect();
+      for(const node of view.svg.querySelectorAll<SVGRectElement>('.node-body')){
+        const box=node.getBoundingClientRect();
+        if(edge.left<box.right && edge.right>box.left && edge.top<box.bottom && edge.bottom>box.top)problems.push(name+': edge overlaps node');
+      }
+      if(groupLabel){
+        const heading=view.svg.querySelector<SVGTextElement>('.group-label')!.getBoundingClientRect();
+        const group=view.svg.querySelector<SVGRectElement>('.group-body')!.getBoundingClientRect();
+        const node=view.svg.querySelector<SVGRectElement>('[data-node-id="a"] .node-body')!.getBoundingClientRect();
+        if(heading.left<group.left || heading.right>group.right || heading.top<group.top || heading.bottom>group.bottom)problems.push(name+': heading outside group');
+        if(heading.bottom>node.top)problems.push(name+': heading overlaps child');
+      }
+    }
+    return problems;
+  });
+  expect(result).toEqual([]);
+});

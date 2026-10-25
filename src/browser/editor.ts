@@ -24,6 +24,7 @@ export async function mountEditor(host:HTMLElement,initial:LiveSnapshot,transpor
   }
   function field<T extends HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>(label:string,input:T,parent:HTMLElement):T {
     const wrapper=document.createElement('div');wrapper.className='bd-edit-field';
+    input.disabled=saving;
     input.id='bd-edit-'+label.toLowerCase().replace(/\W+/g,'-');
     const caption=document.createElement('label');caption.htmlFor=input.id;caption.textContent=label;
     wrapper.append(caption,input);parent.append(wrapper);return input;

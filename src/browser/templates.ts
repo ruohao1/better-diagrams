@@ -33,7 +33,10 @@ export function instantiateNode(template: string, nodeId: string, node: DiagramN
       if(/\\|https?:|javascript:|file:|data:|\/\//i.test(attr.value))throw new Error('SVG template contains an unsupported remote or active resource');
     }
     const id=el.getAttribute('id');
-    if(id){if(!/^[A-Za-z][A-Za-z0-9_-]*$/.test(id)||ids.has(id))throw new Error('Invalid or duplicate SVG identifier');ids.set(id,'bd-'+nodeId+'-'+id);}
+    if(id){
+      if(!/^[A-Za-z][A-Za-z0-9_-]*$/.test(id)||ids.has(id))throw new Error('Invalid or duplicate SVG identifier');
+      ids.set(id,'bd-'+nodeId.length+'-'+nodeId+'-'+id);
+    }
   }
   const reference=(id:string):string=>{const replacement=ids.get(id);if(!replacement)throw new Error('Missing SVG local reference: '+id);return replacement;};
   for(const el of elements){

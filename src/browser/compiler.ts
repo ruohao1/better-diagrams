@@ -57,29 +57,40 @@ export async function compileView(input: ProjectInput, viewId: string, host: HTM
   measure.style.cssText = 'position:absolute;left:-100000px;top:0;visibility:hidden;width:2000px;height:2000px';
   measure.append(svg); host.append(measure);
   try {
-    await document.fonts.ready;
     const measured = new Map<string, { content: SVGSVGElement; box: DOMRect; width: number; height: number }>();
     for (const nodeId of view.nodeIds) {
       const node = doc.nodes[nodeId];
       const name=node.template ?? 'default',custom=Object.hasOwn(input.templates,name);
       if(!custom && name!=='default')throw new Error('Unknown template: '+name);
       const content = instantiateNode(custom?input.templates[name]:defaultNode, nodeId, node);
-      scene.append(content); if(!custom)wrapLabel(content, node.label);
+      scene.append(content);content.getBBox();await document.fonts.ready;
+      if(!custom)wrapLabel(content, node.label);
       const box = content.getBBox();
       if(!Number.isFinite(box.width+box.height) || box.width<=0 || box.height<=0)throw new Error('SVG template has no visible geometry: '+nodeId);
       measured.set(nodeId, { content, box, width: box.width + 16, height: box.height + 16 });
       content.remove();
     }
+    const measureText=async(className:string,label:string):Promise<DOMRect>=>{
+      const text=element('text',{class:className,x:0,y:0},label);scene.append(text);
+      text.getBBox();await document.fonts.ready;
+      const box=text.getBBox();text.remove();return box;
+    };
+    const edgeLabels=new Map<string,DOMRect>(),groupLabels=new Map<string,DOMRect>();
+    for(const edge of view.edges)if(edge.label)edgeLabels.set(edge.id,await measureText('edge-label',edge.label));
+    for(const group of view.groups ?? [])if(group.nodeIds.length)groupLabels.set(group.id,await measureText('group-label',group.label));
     const groupMembers = new Set((view.groups ?? []).flatMap(group => group.nodeIds));
     const makeNode = (id: string): ElkNode => ({ id: 'n-' + id, width: measured.get(id)!.width, height: measured.get(id)!.height });
     const graph: ElkNode = {
       id: 'root',
       layoutOptions: { 'elk.algorithm': 'layered', 'elk.direction': 'RIGHT', 'elk.edgeRouting': 'ORTHOGONAL', 'elk.hierarchyHandling': 'INCLUDE_CHILDREN', 'elk.spacing.nodeNode': '36', 'elk.layered.spacing.nodeNodeBetweenLayers': '56', 'elk.padding': '[top=20,left=20,bottom=20,right=20]' },
       children: [
-        ...(view.groups ?? []).filter(group => group.nodeIds.length).map(group => ({ id: 'g-' + group.id, children: group.nodeIds.map(makeNode), layoutOptions: { 'elk.padding': '[top=46,left=20,bottom=20,right=20]' } })),
+        ...(view.groups ?? []).filter(group => group.nodeIds.length).map(group => {
+          const box=groupLabels.get(group.id)!;
+          return {id:'g-'+group.id,children:group.nodeIds.map(makeNode),layoutOptions:{'elk.padding':'[top='+(box.height+32)+',left=20,bottom=20,right=20]','elk.nodeSize.constraints':'MINIMUM_SIZE','elk.nodeSize.minimum':'('+Math.ceil(box.width+40)+',0)'}};
+        }),
         ...view.nodeIds.filter(id => !groupMembers.has(id)).map(makeNode),
       ],
-      edges: view.edges.map(edge => ({ id: edge.id, sources: ['n-' + edge.source], targets: ['n-' + edge.target], labels: edge.label ? [{ text: edge.label, width: edge.label.length * 8 + 8, height: 20 }] : [] })),
+      edges: view.edges.map(edge => ({ id: edge.id, sources: ['n-' + edge.source], targets: ['n-' + edge.target], labels: edge.label ? [{ text: edge.label, width: edgeLabels.get(edge.id)!.width+8, height: edgeLabels.get(edge.id)!.height+8 }] : [] })),
     };
     const layout = view.nodeIds.length ? await elk.layout(graph) : graph;
     const positions = new Map<string, { x: number; y: number }>([['root', { x: 0, y: 0 }]]);
@@ -89,8 +100,9 @@ export async function compileView(input: ProjectInput, viewId: string, host: HTM
         positions.set(child.id, { x, y });
         if (child.id.startsWith('g-')) {
           const group = view.groups!.find(group => 'g-' + group.id === child.id)!;
+          const box=groupLabels.get(group.id)!;
           const wrapper = element('g', { 'data-group-id': group.id, transform: 'translate(' + x + ',' + y + ')' });
-          wrapper.append(element('rect', { class: 'group-body', rx: 18, width: child.width ?? 0, height: child.height ?? 0 }), element('text', { class: 'group-label', x: 20, y: 27 }, group.label));
+          wrapper.append(element('rect', { class: 'group-body', rx: 18, width: child.width ?? 0, height: child.height ?? 0 }), element('text', { class: 'group-label', x: 20-box.x, y: 16-box.y }, group.label));
           scene.append(wrapper); drawNodes(child, x, y);
         } else {
           const id = child.id.slice(2), data = measured.get(id)!;
@@ -112,7 +124,10 @@ export async function compileView(input: ProjectInput, viewId: string, host: HTM
           const points = [section.startPoint, ...(section.bendPoints ?? []), section.endPoint];
           wrapper.append(element('path', { class: 'edge-path', d: points.map((p, i) => (i ? 'L' : 'M') + p.x + ' ' + p.y).join(' '), 'marker-end': 'url(#' + markerId + ')' }));
         }
-        for (const label of edge.labels ?? []) wrapper.append(element('text', { class: 'edge-label', x: label.x ?? 0, y: (label.y ?? 0) + 14 }, label.text ?? ''));
+        for (const label of edge.labels ?? []) {
+          const box=edgeLabels.get(edge.id)!;
+          wrapper.append(element('text', { class: 'edge-label', x: (label.x ?? 0)+4-box.x, y: (label.y ?? 0)+4-box.y }, label.text ?? ''));
+        }
         scene.append(wrapper);
       }
       for (const child of parent.children ?? []) drawEdges(child);

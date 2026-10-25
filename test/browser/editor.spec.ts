@@ -103,3 +103,25 @@ test('reports invalid source as a validation error and recovers the live view',a
   await writeFile(join(session.dir,'diagram.json'),JSON.stringify(session.input.document));
   await expect(page.getByRole('status')).toHaveText('Updated from files');
 });
+
+test('keeps newly opened node fields disabled until a pending save finishes',async({page,session})=>{
+  let release!:()=>void;const pending=new Promise<void>(resolve=>{release=resolve;});
+  await page.route('**/api/document',async route=>{await pending;await route.continue();});
+  try {
+    await page.goto(session.url);
+    await page.getByRole('button',{name:'Select skill',exact:true}).click();
+    await page.getByLabel('Label',{exact:true}).fill('Chosen skill');
+    await page.getByRole('button',{name:'Save changes',exact:true}).click();
+    await expect(page.getByRole('status')).toHaveText('Saving…');
+    await page.getByRole('button',{name:'Save installation receipt',exact:true}).click();
+    await expect(page.getByLabel('Label',{exact:true})).toBeDisabled();
+    await expect(page.getByLabel('Details',{exact:true})).toBeDisabled();
+    release();await expect(page.getByRole('status')).toHaveText('Saved');
+    await page.getByLabel('Label',{exact:true}).fill('Kept after save');
+    await page.getByRole('button',{name:'Save changes',exact:true}).click();
+    await expect(page.getByRole('status')).toHaveText('Saved');
+    const saved=await readProject(session.dir);
+    expect(saved.document.nodes.select.label).toBe('Chosen skill');
+    expect(saved.document.nodes.receipt.label).toBe('Kept after save');
+  } finally {release();}
+});
