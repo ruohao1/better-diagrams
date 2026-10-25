@@ -4,6 +4,7 @@ const NS='http://www.w3.org/2000/svg';
 const tags=new Set(['svg','g','rect','circle','ellipse','path','line','polyline','polygon','text','tspan','defs','clipPath','linearGradient','radialGradient','stop','title','desc']);
 const attributes=new Set(('id class viewBox width height x y x1 x2 y1 y2 cx cy r rx ry d points transform fill fill-opacity fill-rule stroke stroke-width stroke-linecap stroke-linejoin stroke-opacity stroke-dasharray stroke-dashoffset clip-path clip-rule opacity font-family font-size font-weight font-style letter-spacing text-anchor dominant-baseline dy dx gradientUnits gradientTransform spreadMethod offset stop-color stop-opacity clipPathUnits preserveAspectRatio vector-effect textLength lengthAdjust data-field aria-hidden role href').split(' '));
 
+// shortcut: CSS escapes and image functions are rejected; add a CSS parser if themes need them.
 export function validateTheme(css:string):void {
   const clean=css.replace(/\/\*[\s\S]*?\*\//g,'');
   if(/\\|@import|@namespace|https?:|file:|javascript:|blob:|\/\/|\b(?:image-set|image|cross-fade|paint|element)\s*\(/i.test(clean))throw new Error('Stylesheet must use self-contained resources; imports, escapes and remote resources are unsupported');

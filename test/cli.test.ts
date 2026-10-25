@@ -5,6 +5,11 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
+test('CLI help explains its commands without requiring a project',()=>{
+  const result=spawnSync(process.execPath,['dist/cli.mjs','--help'],{encoding:'utf8'});
+  assert.ifError(result.error);assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/check PROJECT/);assert.match(result.stdout,/dev PROJECT/);
+});
+
 test('CLI checks source and builds a self-contained artifact', async () => {
   const dir=await mkdtemp(join(tmpdir(),'diagram-cli-'));
   try {

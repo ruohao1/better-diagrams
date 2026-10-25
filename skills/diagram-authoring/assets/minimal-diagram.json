@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "title": "Request storage",
+  "purpose": "Explain how a request reaches in-memory storage.",
+  "audience": "Maintainers",
+  "rootViewId": "overview",
+  "nodes": {
+    "router": { "label": "Request handler", "details": "Accepts the request and calls storage." },
+    "store": { "label": "Storage function", "details": "Stores the task by its identifier.", "childViewId": "storage" },
+    "map": { "label": "In-memory Map", "details": "Keeps tasks for the current process lifetime." }
+  },
+  "views": {
+    "overview": {
+      "title": "Request path",
+      "detailLevel": "Components",
+      "nodeIds": ["router", "store"],
+      "edges": [{ "id": "save", "source": "router", "target": "store", "label": "await" }]
+    },
+    "storage": {
+      "title": "Storage internals",
+      "detailLevel": "Implementation",
+      "nodeIds": ["map"],
+      "edges": []
+    }
+  }
+}

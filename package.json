@@ -21,5 +21,15 @@
   },
   "bin": {
     "better-diagrams": "dist/cli.mjs"
-  }
+  },
+  "description": "Interactive software diagrams with automatic layout and local browser editing.",
+  "files": [
+    "dist/cli.mjs",
+    "dist/viewer.js",
+    "dist/editor.js",
+    "plugin.json",
+    "skills/",
+    "examples/",
+    "README.md"
+  ]
 }
