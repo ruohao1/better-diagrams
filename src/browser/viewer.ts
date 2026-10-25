@@ -13,7 +13,7 @@ function ui<K extends keyof HTMLElementTagNameMap>(tag:K,className:string,text?:
   const el=document.createElement(tag);el.className=className;if(text!==undefined)el.textContent=text;return el;
 }
 
-export async function mountViewer(host:HTMLElement,input:ProjectInput,options:{initialViewId?:string;renderDetails?:(host:HTMLElement,nodeId:string)=>void}={}):Promise<ViewerHandle> {
+export async function mountViewer(host:HTMLElement,input:ProjectInput,options:{initialViewId?:string;renderDetails?:(host:HTMLElement,nodeId:string)=>void;onViewChange?:(viewId:string)=>void}={}):Promise<ViewerHandle> {
   const style=ui('style','');style.textContent=css;
   const app=ui('section','bd-app');
   const title=ui('h1','bd-title'),purpose=ui('p','bd-purpose'),audience=ui('p','bd-audience');
@@ -84,6 +84,7 @@ export async function mountViewer(host:HTMLElement,input:ProjectInput,options:{i
       result.svg.addEventListener('pointermove',event=>{if(!drag)return;const rect=result.svg.getBoundingClientRect(),scale=Math.max(drag.view[2]/rect.width,drag.view[3]/rect.height);result.svg.setAttribute('viewBox',[drag.view[0]-(event.clientX-drag.x)*scale,drag.view[1]-(event.clientY-drag.y)*scale,drag.view[2],drag.view[3]].join(' '));});
       result.svg.addEventListener('pointerup',()=>{drag=undefined;});result.svg.addEventListener('pointercancel',()=>{drag=undefined;});
       renderDetails();
+      options.onViewChange?.(result.viewId);
     } catch(reason){if(version===generation)showError(reason);throw reason;}
   }
   await render(input);

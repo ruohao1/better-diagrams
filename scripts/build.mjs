@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 
 const common = { bundle: true, sourcemap: false, legalComments: 'inline', loader: { '.svg': 'text', '.css': 'text' } };
 await build({ ...common, entryPoints: ['src/browser/compiler.ts'], outfile: 'dist/test/compiler.js', format: 'iife', globalName: 'DiagramCompiler', platform: 'browser' });
+if (existsSync('src/browser/editor.ts')) await build({ ...common, entryPoints: ['src/browser/editor.ts'], outfile: 'dist/test/editor.js', format: 'iife', globalName: 'DiagramEditor', platform: 'browser' });
 for (const name of ['viewer', 'editor']) {
   const entry = 'src/browser/' + name + '-entry.ts';
   if (existsSync(entry)) await build({ ...common, entryPoints: [entry], outfile: 'dist/' + name + '.js', format: 'iife', platform: 'browser', minify: true });
