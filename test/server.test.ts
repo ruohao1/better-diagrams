@@ -5,6 +5,20 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readProject } from '../src/project.ts';
 import { startDev } from '../src/server.ts';
+import {connect} from 'node:net';
+import {once} from 'node:events';
+
+test('closes the dev session when an accepted connection has incomplete headers',async()=>{
+  const server=await startDev('examples/skill-install',{editorJs:''}),url=new URL(server.url);
+  const socket=connect(Number(url.port),'127.0.0.1');let closing:Promise<void>|undefined,timer:ReturnType<typeof setTimeout>|undefined;
+  try {
+    await once(socket,'connect');socket.write('GET /api/events HTTP/1.1\r\nHost: '+url.host+'\r\n');
+    await new Promise(resolve=>setTimeout(resolve,30));
+    closing=server.close();
+    const closed=await Promise.race([closing.then(()=>true),new Promise<boolean>(resolve=>{timer=setTimeout(()=>resolve(false),1000);})]);
+    assert.equal(closed,true,'An unfinished request must not block session shutdown');
+  } finally {clearTimeout(timer);socket.destroy();await (closing??server.close());}
+});
 
 test('server streams replacements/errors, saves safely and rejects foreign or oversized writes', async () => {
   const dir=await mkdtemp(join(tmpdir(),'diagram-server-'));

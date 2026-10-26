@@ -61,5 +61,9 @@ export async function startDev(root:string,options:{port?:number;editorJs:string
   catch(error){unwatch();throw error;}
   const address=server.address();if(!address || typeof address==='string')throw new Error('Unable to start local server');
   url='http://127.0.0.1:'+address.port;
-  return {url,close:async()=>{unwatch();await pending;for(const client of clients)client.end();await new Promise<void>((resolve,reject)=>server.close(error=>error?reject(error):resolve()));}};
+  return {url,close:async()=>{unwatch();await pending;for(const client of clients)client.end();await new Promise<void>((resolve,reject)=>{
+    server.close(error=>error?reject(error):resolve());
+    // An accepted socket can still be waiting for headers or a new SSE request.
+    server.closeAllConnections();
+  });}};
 }
