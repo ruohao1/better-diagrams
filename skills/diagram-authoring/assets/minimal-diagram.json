@@ -1,26 +1,31 @@
 {
-  "version": 1,
+  "version": 2,
   "title": "Request storage",
   "purpose": "Explain how a request reaches in-memory storage.",
   "audience": "Maintainers",
   "rootViewId": "overview",
   "nodes": {
-    "router": { "label": "Request handler", "details": "Accepts the request and calls storage." },
-    "store": { "label": "Storage function", "details": "Stores the task by its identifier.", "childViewId": "storage" },
-    "map": { "label": "In-memory Map", "details": "Keeps tasks for the current process lifetime." }
+    "router": { "label": "Request handler", "summary": "Receives a task and calls storage.", "details": "Accepts the request and awaits the storage function." },
+    "store": { "label": "Storage function", "summary": "Stores the task by identifier.", "details": "Writes the task to the process-local Map.", "childViewId": "storage" },
+    "map": { "label": "Write to Map", "summary": "Keeps the current task value.", "details": "A write replaces the previous task with the same identifier." },
+    "done": { "label": "Task stored", "summary": "", "details": "The write completed. Data lasts for the current process lifetime." }
   },
   "views": {
     "overview": {
+      "type": "architecture",
       "title": "Request path",
       "detailLevel": "Components",
       "nodeIds": ["router", "store"],
-      "edges": [{ "id": "save", "source": "router", "target": "store", "label": "await" }]
+      "edges": [{ "id": "save", "source": "router", "target": "store", "kind": "call", "label": "Await save" }]
     },
     "storage": {
+      "type": "flowchart",
       "title": "Storage internals",
-      "detailLevel": "Implementation",
-      "nodeIds": ["map"],
-      "edges": []
+      "detailLevel": "Write steps",
+      "nodeIds": ["map", "done"],
+      "stepKinds": { "map": "action", "done": "end" },
+      "mainPath": ["persist"],
+      "edges": [{ "id": "persist", "source": "map", "target": "done", "kind": "next" }]
     }
   }
 }

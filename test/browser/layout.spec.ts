@@ -11,7 +11,7 @@ test.beforeEach(async ({ page }) => {
   await page.addScriptTag({ path: 'dist/test/compiler.js' });
 });
 
-test('lays out grouped nodes, cross-group routes and full export bounds', async ({ page }) => {
+test('lays out grouped nodes, cross-group routes and full export bounds', async ({ page },info) => {
   const result = await page.evaluate(async (input) => {
     const host = document.getElementById('stage')!;
     const view = await DiagramCompiler.compileView(input, 'overview', host);
@@ -40,7 +40,7 @@ test('lays out grouped nodes, cross-group routes and full export bounds', async 
   expect(result.edgeCount).toBe(6);
   expect(result.lines).toBe(fixture.nodes.inventory.label);
   expect(result.svg).not.toMatch(/foreignObject|NaN|Infinity|toolbar/);
-  await page.screenshot({ path: '.superpowers/sdd/2026-10-25-diagram-authoring/layout.png' });
+  await page.screenshot({ path: info.outputPath('layout.png') });
 });
 
 test('handles cycles, disconnected nodes, long Unicode labels and an empty view', async ({ page }) => {

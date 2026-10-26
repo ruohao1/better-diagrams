@@ -47,6 +47,6 @@ Refine architecture first, then flowcharts. The remaining types stay in the cata
 
 ## Visual validation
 
-The architecture and flowchart decisions above are agreed. A throwaway visual prototype is captured on `prototype/diagram-experience`; production implementation is still pending.
+The architecture and flowchart decisions above are implemented for version 2 sources. Version 1 retains its measured node sizing and uses the new modal viewer. The throwaway visual baseline remains on `prototype/diagram-experience`; its review switcher and prototype modules were not promoted.
 
-The visual check uses a small architecture diagram, a dense architecture diagram with nested boundaries, and a flowchart with branches and a retry loop. It tests readable initial scale, fixed-size text, routing, modal navigation, and clean export before these rules are added to the production renderer. See [the prototype readout](prototype-readout.md) for commands, observations, and limits. The user accepted the visual baseline after the drag/routing fixes and requested a production integration plan on 2026-10-26.
+Production checks use small and dense architecture diagrams, a branching/retry flowchart, custom assets, and live source updates. They exercise readable initial scale, fixed text, routing, modal navigation, editing, and clean exports. See [the prototype readout](prototype-readout.md) for historical observations and [the production evaluation](../evals/diagram-experience.md) for installed-host evidence. The user accepted the visual baseline after the drag/routing fixes and requested integration on 2026-10-26.

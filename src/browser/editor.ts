@@ -75,8 +75,8 @@ export async function mountEditor(host:HTMLElement,initial:LiveSnapshot,transpor
     if(saving || !dirty || pending)return;saving=true;syncControls();say('Saving…');const submitted=structuredClone(draft);
     try {
       const saved=await transport.save(submitted,base.documentRevision);base=saved;draft=submitted;dirty=false;pending=undefined;lastSequence=Math.max(lastSequence,saved.sequence);say('Saved');
-      if(deferred && deferred.sequence>saved.sequence)await applySnapshot(deferred);
-      else {if(deferred?.documentRevision===saved.documentRevision)base=deferred;await preview();}
+      await preview();
+      while(deferred){const latest=deferred;deferred=undefined;if(latest.sequence>base.sequence)await applySnapshot(latest);}
     } catch(error){
       const code=error && typeof error==='object' && 'code' in error?error.code:'';
       say(code==='CONFLICT'?'Conflict: source changed. Download your draft before reloading.':'Save failed: '+(error instanceof Error?error.message:JSON.stringify(error)));

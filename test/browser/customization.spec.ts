@@ -52,7 +52,7 @@ test('rejects active templates and non-self-contained stylesheet resources',asyn
   expect(results.errors).not.toContain('accepted');expect(results.executed).toBe(false);
 });
 
-test('updates templates and geometry live without erasing an unsaved browser draft',async({page,session})=>{
+test('updates templates and geometry live without erasing an unsaved browser draft',async({page,session},info)=>{
   await page.goto(session.url);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();await expect(page.getByRole('button',{name:'Select skill',exact:true})).toBeVisible();
   await mkdir(join(session.dir,'templates'),{recursive:true});await writeFile(join(session.dir,'templates/service.svg'),template);
   const changed=structuredClone(session.input.document);changed.nodes.select.template='service';changed.nodes.fingerprint.template='service';
@@ -73,7 +73,7 @@ test('updates templates and geometry live without erasing an unsaved browser dra
   await writeFile(join(session.dir,'templates/service.svg'),template);
   await expect(page.getByRole('alert')).toBeHidden();
   await expect(page.getByRole('status')).toHaveText('Unsaved changes');
-  await page.screenshot({path:'.superpowers/sdd/2026-10-25-diagram-authoring/custom-editor.png'});
+  await page.screenshot({path:info.outputPath('custom-editor.png')});
   const artifact=join(session.dir,'offline.html');
   await writeFile(artifact,buildStandaloneHtml(await readProject(session.dir),await readFile('dist/viewer.js','utf8')));
   const offline=await page.context().newPage();const requests:string[]=[];
@@ -85,5 +85,5 @@ test('updates templates and geometry live without erasing an unsaved browser dra
   const internalDownload=offline.waitForEvent('download');await offline.getByRole('button',{name:'Export SVG',exact:true}).click();
   const internal=await readFile((await (await internalDownload).path())!,'utf8');
   expect(internal).toContain('data-node-id="fingerprint"');expect(internal).not.toContain('data-node-id="install"');expect(requests).toEqual([]);
-  await offline.screenshot({path:'.superpowers/sdd/2026-10-25-diagram-authoring/custom-internals.png'});await offline.close();
+  await offline.screenshot({path:info.outputPath('custom-internals.png')});await offline.close();
 });

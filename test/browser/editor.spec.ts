@@ -119,6 +119,20 @@ test('reports invalid source as a validation error and recovers the live view',a
   await expect(page.getByRole('status')).toHaveText('Updated from files');
 });
 
+test('applies a newer source event that arrives during the post-save preview',async({page,session})=>{
+  await page.setContent('<main id="app"></main>');await page.addScriptTag({path:'dist/test/editor.js'});
+  await page.evaluate(async initial=>{
+    let listener:(event:ProjectEvent)=>void=()=>{};const app=document.getElementById('app')!;
+    await DiagramEditor.mountEditor(app,{...initial,sequence:1},{subscribe:fn=>{listener=fn;return()=>{};},save:async document=>{
+      const saved={...initial,document:structuredClone(document),sequence:10,documentRevision:'saved',revision:'saved'},external=structuredClone(saved);external.sequence=11;external.documentRevision='newer';external.revision='newer';external.document.nodes.receipt.label='Source after reply';
+      const observer=new MutationObserver(()=>{if([...app.querySelectorAll('[role=status]')].some(el=>el.textContent==='Saved')){observer.disconnect();listener({type:'snapshot',snapshot:external});}});
+      observer.observe(app,{childList:true,characterData:true,subtree:true});return saved;
+    }});
+  },session.input);
+  await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();await page.getByRole('button',{name:'Save installation receipt',exact:true}).click();await page.getByLabel('Label',{exact:true}).fill('Submitted draft');await page.getByRole('button',{name:'Save changes',exact:true}).click();
+  await expect(page.locator('[data-node-id=receipt]')).toHaveAttribute('aria-label','Source after reply');await expect(page.getByLabel('Label',{exact:true})).toHaveValue('Source after reply');
+});
+
 test('keeps newly opened node fields disabled until a pending save finishes',async({page,session})=>{
   let release!:()=>void;const pending=new Promise<void>(resolve=>{release=resolve;});
   await page.route('**/api/document',async route=>{await pending;await route.continue();});

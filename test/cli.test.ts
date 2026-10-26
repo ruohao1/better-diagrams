@@ -13,15 +13,10 @@ test('CLI help explains its commands without requiring a project',()=>{
 test('CLI checks source and builds a self-contained artifact', async () => {
   const dir=await mkdtemp(join(tmpdir(),'diagram-cli-'));
   try {
-    const checked=spawnSync(process.execPath,['dist/cli.mjs','check','examples/skill-install'],{encoding:'utf8'});
-    assert.ifError(checked.error);
-    assert.equal(checked.status,0,checked.stderr);
-    assert.equal(JSON.parse(checked.stdout).ok,true);
-    const out=join(dir,'diagram.html');
-    const built=spawnSync(process.execPath,['dist/cli.mjs','build','examples/skill-install','--out',out],{encoding:'utf8'});
-    assert.ifError(built.error);
-    assert.equal(built.status,0,built.stderr);
-    assert.match(await readFile(out,'utf8'),/Install a local agent skill/);
+    for(const name of ['skill-install','architecture-small','order-flow']){
+      const checked=spawnSync(process.execPath,['dist/cli.mjs','check','examples/'+name],{encoding:'utf8'});assert.ifError(checked.error);assert.equal(checked.status,0,checked.stderr);assert.equal(JSON.parse(checked.stdout).ok,true);
+      const out=join(dir,name+'.html'),built=spawnSync(process.execPath,['dist/cli.mjs','build','examples/'+name,'--out',out],{encoding:'utf8'});assert.ifError(built.error);assert.equal(built.status,0,built.stderr);assert.equal(JSON.parse(built.stdout).rendering,'not-verified');assert.match(await readFile(out,'utf8'),/diagram-data/);
+    }
     const invalid=spawnSync(process.execPath,['dist/cli.mjs','check',dir],{encoding:'utf8'});
     assert.ifError(invalid.error);
     assert.equal(invalid.status,1);
