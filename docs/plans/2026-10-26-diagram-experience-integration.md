@@ -179,7 +179,7 @@ Invoke the authoring-controls hook in the root and active modal frames. The edit
 
 **Interfaces:** Consumes the existing v1 parser/save functions. Produces the source/normalization types and `normalizeDocument` defined above. `readProject`, `saveDocument`, and editor transport still exchange raw `DiagramDocument` values.
 
-- [ ] **Step 1: Write failing model/roundtrip tests.** Cover both valid v2 families; per-view flow roles; unsupported types/kinds; orphan/cyclic groups; missing outcome labels or labels on `next`; missing/noncontiguous/cyclic main paths; unknown fields; unsafe color/logo values; and empty views. Reuse a canonical node across architecture/flowchart views without changing its metadata. Add a browser assertion that v2 graph controls cannot create invalid source before their Task 7 integration. Add these assertions to named tests `normalizes without upgrading source` and `saves legacy sources without upgrading their version`:
+- [x] **Step 1: Write failing model/roundtrip tests.** Cover both valid v2 families; per-view flow roles; unsupported types/kinds; orphan/cyclic groups; missing outcome labels or labels on `next`; missing/noncontiguous/cyclic main paths; unknown fields; unsafe color/logo values; and empty views. Reuse a canonical node across architecture/flowchart views without changing its metadata. Add a browser assertion that v2 graph controls cannot create invalid source before their Task 7 integration. Add these assertions to named tests `normalizes without upgrading source` and `saves legacy sources without upgrading their version`:
   ```ts
   const legacy = JSON.parse(readFileSync('examples/skill-install/diagram.json', 'utf8'));
   const original = structuredClone(legacy);
@@ -191,10 +191,10 @@ Invoke the authoring-controls hook in the root and active modal frames. The edit
   assert.equal(after.document.version, 1);
   assert.deepEqual(after.document.nodes.receipt.references, before.document.nodes.receipt.references);
   ```
-- [ ] **Step 2: Run** `node --test test/model.test.ts test/project.test.ts`. Expected: FAIL on missing v2/normalization support.
-- [ ] **Step 3: Implement** the shared source contract. Keep v1 validation unchanged, normalize only for rendering, and preserve the current save validation boundary. Narrow legacy mutation tests to `DiagramDocumentV1`. Until Task 7 supplies v2 graph editing, disable only its graph mutations with an explicit status message, and narrow existing mutation handlers to v1 before changing arrays. Common text edits and v1 graph editing still work. Create the small architecture and flowchart fixtures with source summaries and explicit typed edges; no positions or fabricated repository references.
-- [ ] **Step 4: Run** `npm run check && node --test test/model.test.ts test/project.test.ts && npm run build && npx --no-install playwright test test/browser/editor.spec.ts --project=chromium`. Expected: PASS, including all existing v1 tests and the temporary v2 graph guard.
-- [ ] **Step 5: Commit** as `feat: add typed diagram source with legacy compatibility`, including this plan and approved design records with the implementation changes.
+- [x] **Step 2: Run** `node --test test/model.test.ts test/project.test.ts`. Expected: FAIL on missing v2/normalization support.
+- [x] **Step 3: Implement** the shared source contract. Keep v1 validation unchanged, normalize only for rendering, and preserve the current save validation boundary. Narrow legacy mutation tests to `DiagramDocumentV1`. Until Task 7 supplies v2 graph editing, disable only its graph mutations with an explicit status message, and narrow existing mutation handlers to v1 before changing arrays. Common text edits and v1 graph editing still work. Create the small architecture and flowchart fixtures with source summaries and explicit typed edges; no positions or fabricated repository references.
+- [x] **Step 4: Run** `npm run check && node --test test/model.test.ts test/project.test.ts && npm run build && npx --no-install playwright test test/browser/editor.spec.ts --project=chromium`. Expected: PASS, including all existing v1 tests and the temporary v2 graph guard.
+- [x] **Step 5: Commit** as `feat: add typed diagram source with legacy compatibility`, including this plan and approved design records with the implementation changes.
 
 ### Task 2: Load and safely render local logos
 

@@ -37,6 +37,8 @@ test('saves with a document revision and keeps a bounded recovery copy', async (
     const original=JSON.stringify(input.document);await writeFile(join(dir,'diagram.json'),original);
     const before=await readProject(dir);const edited=structuredClone(before.document);edited.nodes.select.label='Updated label';
     const after=await saveDocument(dir,edited,before.documentRevision);
+    assert.equal(after.document.version,1);
+    assert.deepEqual(after.document.nodes.receipt.references,before.document.nodes.receipt.references);
     assert.equal(after.document.nodes.select.label,'Updated label');
     assert.equal(await readFile(join(dir,'.diagram-recovery/previous.json'),'utf8'),original);
     await assert.rejects(saveDocument(dir,before.document,before.documentRevision),/conflict/i);

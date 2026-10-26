@@ -1,0 +1,211 @@
+{
+  "version": 2,
+  "title": "Order approval",
+  "purpose": "Illustrate synthetic software relationships and diagram exploration.",
+  "audience": "People evaluating Better Diagrams",
+  "rootViewId": "flow",
+  "nodes": {
+    "start": {
+      "label": "Order received",
+      "summary": "A well-formed order enters the approval flow.",
+      "details": "A well-formed order enters the approval flow. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "stock": {
+      "label": "Stock available?",
+      "summary": "Check availability before attempting a reservation.",
+      "details": "Check availability before attempting a reservation. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "reserve": {
+      "label": "Reserve inventory",
+      "summary": "Hold the required stock for this order.",
+      "details": "Hold the required stock for this order. This is illustrative example data, not a claim extracted from a repository.",
+      "childViewId": "reservation"
+    },
+    "authorize": {
+      "label": "Authorize payment",
+      "summary": "Request authorization for the reserved order.",
+      "details": "Request authorization for the reserved order. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "paid": {
+      "label": "Payment accepted?",
+      "summary": "Inspect the authorization result.",
+      "details": "Inspect the authorization result. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "done": {
+      "label": "Order accepted",
+      "summary": "The order can now proceed to fulfillment.",
+      "details": "The order can now proceed to fulfillment. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "wait": {
+      "label": "Wait for stock",
+      "summary": "Pause before trying the availability check again.",
+      "details": "Pause before trying the availability check again. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "declined": {
+      "label": "Order declined",
+      "summary": "Release the held stock and report the failed authorization.",
+      "details": "Release the held stock and report the failed authorization. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "reservation-start": {
+      "label": "Begin",
+      "summary": "Start a reservation attempt.",
+      "details": "Start a reservation attempt. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "reservation-write": {
+      "label": "Write reservation",
+      "summary": "Write against the current stock version.",
+      "details": "Write against the current stock version. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "reservation-valid": {
+      "label": "Version matches?",
+      "summary": "Check whether another writer changed the available stock.",
+      "details": "Check whether another writer changed the available stock. This is illustrative example data, not a claim extracted from a repository."
+    },
+    "reservation-done": {
+      "label": "Stock held",
+      "summary": "The reservation is ready for payment authorization.",
+      "details": "The reservation is ready for payment authorization. This is illustrative example data, not a claim extracted from a repository."
+    }
+  },
+  "views": {
+    "flow": {
+      "type": "flowchart",
+      "title": "Order approval",
+      "detailLevel": "Flowchart · main path with retry",
+      "nodeIds": [
+        "start",
+        "stock",
+        "reserve",
+        "authorize",
+        "paid",
+        "done",
+        "wait",
+        "declined"
+      ],
+      "edges": [
+        {
+          "id": "start-stock",
+          "source": "start",
+          "target": "stock",
+          "kind": "next"
+        },
+        {
+          "id": "stock-reserve",
+          "source": "stock",
+          "target": "reserve",
+          "kind": "branch",
+          "label": "Yes"
+        },
+        {
+          "id": "reserve-authorize",
+          "source": "reserve",
+          "target": "authorize",
+          "kind": "next"
+        },
+        {
+          "id": "authorize-paid",
+          "source": "authorize",
+          "target": "paid",
+          "kind": "next"
+        },
+        {
+          "id": "paid-done",
+          "source": "paid",
+          "target": "done",
+          "kind": "branch",
+          "label": "Yes"
+        },
+        {
+          "id": "stock-wait",
+          "source": "stock",
+          "target": "wait",
+          "kind": "branch",
+          "label": "No"
+        },
+        {
+          "id": "wait-stock",
+          "source": "wait",
+          "target": "stock",
+          "kind": "retry",
+          "label": "Retry"
+        },
+        {
+          "id": "paid-declined",
+          "source": "paid",
+          "target": "declined",
+          "kind": "branch",
+          "label": "No"
+        }
+      ],
+      "groups": [],
+      "stepKinds": {
+        "start": "start",
+        "stock": "decision",
+        "reserve": "action",
+        "authorize": "action",
+        "paid": "decision",
+        "done": "end",
+        "wait": "action",
+        "declined": "end"
+      },
+      "mainPath": [
+        "start-stock",
+        "stock-reserve",
+        "reserve-authorize",
+        "authorize-paid",
+        "paid-done"
+      ]
+    },
+    "reservation": {
+      "type": "flowchart",
+      "title": "Reserve inventory",
+      "detailLevel": "Subprocess · reservation flow",
+      "nodeIds": [
+        "reservation-start",
+        "reservation-write",
+        "reservation-valid",
+        "reservation-done"
+      ],
+      "edges": [
+        {
+          "id": "reservation-start-write",
+          "source": "reservation-start",
+          "target": "reservation-write",
+          "kind": "next"
+        },
+        {
+          "id": "reservation-write-valid",
+          "source": "reservation-write",
+          "target": "reservation-valid",
+          "kind": "next"
+        },
+        {
+          "id": "reservation-valid-done",
+          "source": "reservation-valid",
+          "target": "reservation-done",
+          "kind": "branch",
+          "label": "Yes"
+        },
+        {
+          "id": "reservation-valid-write",
+          "source": "reservation-valid",
+          "target": "reservation-write",
+          "kind": "retry",
+          "label": "Retry"
+        }
+      ],
+      "groups": [],
+      "stepKinds": {
+        "reservation-start": "start",
+        "reservation-write": "action",
+        "reservation-valid": "decision",
+        "reservation-done": "end"
+      },
+      "mainPath": [
+        "reservation-start-write",
+        "reservation-write-valid",
+        "reservation-valid-done"
+      ]
+    }
+  }
+}

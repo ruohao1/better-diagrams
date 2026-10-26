@@ -45,6 +45,7 @@ test('lays out grouped nodes, cross-group routes and full export bounds', async 
 
 test('handles cycles, disconnected nodes, long Unicode labels and an empty view', async ({ page }) => {
   const changed = structuredClone(input);
+  if(changed.document.version!==1)throw new Error('Expected legacy fixture');
   changed.document.nodes.select.label = 'Une longue étiquette 日本語 — 🧭 '.repeat(4);
   changed.document.nodes.isolated = { label: 'Disconnected', details: 'No connections.' };
   changed.document.views.overview.nodeIds.push('isolated');

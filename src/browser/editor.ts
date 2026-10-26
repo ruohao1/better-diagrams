@@ -52,22 +52,22 @@ export async function mountEditor(host:HTMLElement,initial:LiveSnapshot,transpor
   bar.append(status,save,reload,download);
   const newLabel=field('New node label',document.createElement('input'),tools);
   const addNode=button('Add node',async()=>{
-    if(saving)return;let n=1;while(Object.hasOwn(draft.nodes,'node-'+n))n++;
+    if(saving || draft.version!==1)return;let n=1;while(Object.hasOwn(draft.nodes,'node-'+n))n++;
     const id='node-'+n;draft.nodes[id]={label:newLabel.value.trim()||'New node',details:''};draft.views[viewId].nodeIds.push(id);newLabel.value='';edited();await preview();
   },true);tools.append(addNode);
   const from=field('Connection source',document.createElement('select'),tools),to=field('Connection target',document.createElement('select'),tools);
   const addEdge=button('Add connection',async()=>{
-    if(saving || !from.value || !to.value)return;
+    if(saving || draft.version!==1 || !from.value || !to.value)return;
     const view=draft.views[viewId];let n=1;while(view.edges.some(edge=>edge.id==='edge-'+n))n++;
     view.edges.push({id:'edge-'+n,source:from.value,target:to.value});edited();await preview();
   },true);tools.append(addEdge);
   const edgeToRemove=field('Connection to remove',document.createElement('select'),tools);
-  tools.append(button('Remove connection',async()=>{if(saving || !edgeToRemove.value)return;draft.views[viewId].edges=draft.views[viewId].edges.filter(edge=>edge.id!==edgeToRemove.value);edited();await preview();},true));
+  tools.append(button('Remove connection',async()=>{if(saving || draft.version!==1 || !edgeToRemove.value)return;draft.views[viewId].edges=draft.views[viewId].edges.filter(edge=>edge.id!==edgeToRemove.value);edited();await preview();},true));
   function syncControls():void {
     save.disabled=saving || !dirty || !!pending;reload.hidden=!pending;
     for(const el of root.querySelectorAll<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>('input,textarea,select'))el.disabled=saving;
-    for(const el of controls)if(el.isConnected)el.disabled=saving;
-    addEdge.disabled=saving || !draft.views[viewId]?.nodeIds.length;
+    for(const el of controls)if(el.isConnected)el.disabled=saving || draft.version!==1;
+    addEdge.disabled=saving || draft.version!==1 || !draft.views[viewId]?.nodeIds.length;
   }
   function choices():void {
     const view=draft.views[viewId];if(!view)return;
@@ -104,9 +104,9 @@ export async function mountEditor(host:HTMLElement,initial:LiveSnapshot,transpor
     label.onchange=description.onchange=()=>{void preview();};
     for(const ref of node.references ?? []){const row=document.createElement('p'),text=ref.path+(ref.line?':'+ref.line:'');if(ref.url){const a=document.createElement('a');a.href=ref.url;a.textContent=text;a.target='_blank';a.rel='noopener noreferrer';row.append(a);}else row.textContent=text;parent.append(row);}
     const remove=button('Remove from view',async()=>{
-      if(saving)return;const view=draft.views[viewId];view.nodeIds=view.nodeIds.filter(id=>id!==nodeId);view.edges=view.edges.filter(edge=>edge.source!==nodeId && edge.target!==nodeId);
+      if(saving || draft.version!==1)return;const view=draft.views[viewId];view.nodeIds=view.nodeIds.filter(id=>id!==nodeId);view.edges=view.edges.filter(edge=>edge.source!==nodeId && edge.target!==nodeId);
       for(const group of view.groups ?? [])group.nodeIds=group.nodeIds.filter(id=>id!==nodeId);edited();await preview();
-    });remove.disabled=saving;parent.append(remove);
+    });remove.disabled=saving || draft.version!==1;parent.append(remove);
   }
   async function applySnapshot(snapshot:LiveSnapshot):Promise<void> {
     if(dirty && snapshot.documentRevision!==base.documentRevision){pending=snapshot;say('Conflict: files changed. Download your draft or reload files.');syncControls();return;}
@@ -120,7 +120,7 @@ export async function mountEditor(host:HTMLElement,initial:LiveSnapshot,transpor
     if(saving){deferred=event.snapshot;return;}
     void applySnapshot(event.snapshot).catch(error=>say(String(error)));
   });
-  say('Saved');choices();syncControls();
+  say(draft.version===1?'Saved':'Saved; typed graph editing is not yet available');choices();syncControls();
   const beforeUnload=(event:BeforeUnloadEvent)=>{if(dirty){event.preventDefault();event.returnValue='';}};window.addEventListener('beforeunload',beforeUnload);
   return {destroy:()=>{unsubscribe();viewer?.destroy();window.removeEventListener('beforeunload',beforeUnload);root.remove();}};
 }

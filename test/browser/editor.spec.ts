@@ -9,6 +9,19 @@ declare global {
   var editorHarness:{emit:(event:ProjectEvent)=>void;failSave:boolean};
 }
 
+test('guards typed graph mutations until typed authoring is available',async({page})=>{
+  const document=JSON.parse(await readFile('examples/architecture-small/diagram.json','utf8'));
+  await page.setContent('<main id="app"></main>');await page.addScriptTag({path:'dist/test/editor.js'});
+  await page.evaluate(async document=>{
+    await DiagramEditor.mountEditor(window.document.getElementById('app')!,{document,themeCss:'',templates:{},revision:'test',documentRevision:'test',sequence:1},{subscribe:()=>()=>{},save:async()=>{throw new Error('Unexpected save');}});
+  },document);
+  await expect(page.getByRole('button',{name:'Add node',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Add connection',exact:true})).toBeDisabled();
+  await page.getByRole('button',{name:'Order service',exact:true}).click();
+  await expect(page.getByLabel('Label',{exact:true})).toBeEditable();
+  await expect(page.getByRole('button',{name:'Remove from view',exact:true})).toBeDisabled();
+});
+
 test('roundtrips content, nodes and edges while preserving other views and metadata',async({page,session})=>{
   await page.goto(session.url);
   await page.getByRole('button',{name:'Save installation receipt',exact:true}).click();
