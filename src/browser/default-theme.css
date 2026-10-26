@@ -1,11 +1,15 @@
 .diagram { font-family: ui-sans-serif, system-ui, sans-serif; color: #253344; }
 .canvas-background { fill: #f8f9fb; }
 .node-body { fill: #fff; stroke: #aebccc; stroke-width: 1.5; }
-.node-label { fill: #172b46; font-size: 14px; font-weight: 600; }
+.node-label { fill: #172b46; font-size: 15px; font-weight: 600; }
+.node-summary { fill: #627286; font-size: 12.5px; }
 .group-body { fill: #edf1f6; stroke: #d6dee8; stroke-width: 1; }
-.group-label { fill: #53677e; font-size: 13px; font-weight: 650; letter-spacing: .4px; }
-.edge-path { fill: none; stroke: #8496ad; stroke-width: 1.5; }
-.arrow { fill: #8496ad; }
+.group-label { fill: #7d8ba0; font-size: 11px; font-weight: 600; letter-spacing: .4px; }
+.edge-path { fill: none; stroke-width: 1.5; stroke-linejoin: round; }
 .edge-label { fill: #405570; font-size: 12px; paint-order: stroke; stroke: #f8f9fb; stroke-width: 5px; stroke-linejoin: round; }
+.edge-label-background { fill: #f8f9fb; opacity: .96; }
+.legend-title { fill: #2a3b53; font-size: 19px; font-weight: 600; }
+.legend-level { fill: #8491a2; font-size: 11px; }
+.legend-key { fill: #708096; font-size: 11px; }
 .diagram [data-node-id] { cursor: pointer; outline: none; }
 .diagram [data-node-id]:focus .node-body, .diagram [data-node-id][aria-pressed=true] .node-body { stroke: #2563eb; stroke-width: 3; }

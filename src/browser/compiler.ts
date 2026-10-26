@@ -1,152 +1,90 @@
-import ELK from 'elkjs/lib/elk.bundled.js';
-import type { ElkNode } from 'elkjs/lib/elk-api.js';
-import { parseDocument } from '../model.ts';
-import type { ProjectInput } from '../model.ts';
-import defaultNode from './default-node.svg';
+import {normalizeDocument} from '../model.ts';
+import type {ConnectionKind,ProjectInput} from '../model.ts';
 import defaultTheme from './default-theme.css';
-import { instantiateNode,validateTheme } from './templates.ts';
+import {scopeId,validateTheme} from './templates.ts';
+import {element,prepareNode,textLines,textMetrics,wrapText} from './nodes.ts';
+import {layoutCandidates} from './layout.ts';
+import {assessRoutes,compareRoutes,shortenRoutes} from './routing.ts';
+import type {Rect,ViewMeasurements} from './geometry.ts';
 
-const NS = 'http://www.w3.org/2000/svg';
-export type Bounds = { x: number; y: number; width: number; height: number };
-export type CompiledView = { viewId: string; svg: SVGSVGElement; bounds: Bounds };
-const elk = new ELK();
+export type Bounds=Rect;
+export type CompiledView={viewId:string;svg:SVGSVGElement;bounds:Bounds};
+let instance=0;
+const connections:Record<ConnectionKind,{name:string;color:string;dash:string}>={
+  call:{name:'Call',color:'#687d99',dash:''},data:{name:'Data access',color:'#4e8d80',dash:'3 3'},event:{name:'Event',color:'#9674b7',dash:'8 4'},telemetry:{name:'Telemetry',color:'#9ba6b7',dash:'1 4'},dependency:{name:'Dependency',color:'#7e8496',dash:'4 4'},
+  next:{name:'Next step',color:'#5c7395',dash:''},branch:{name:'Branch',color:'#b88062',dash:'6 4'},error:{name:'Error',color:'#ba6873',dash:'6 4'},retry:{name:'Retry',color:'#a581b5',dash:'3 4'},jump:{name:'Jump',color:'#8b7ea4',dash:'8 4'},
+};
 
-function element<K extends keyof SVGElementTagNameMap>(name: K, attrs: Record<string, string | number> = {}, text?: string): SVGElementTagNameMap[K] {
-  const node = document.createElementNS(NS, name);
-  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
-function wrapLabel(svg: SVGSVGElement, label: string): void {
-  const text = svg.querySelector<SVGTextElement>('.node-label');
-  const rect = svg.querySelector<SVGRectElement>('.node-body');
-  if (!text || !rect) return;
-  const lines: string[] = [];
-  let line = '';
-  for (const word of label.split(/\s+/)) {
-    text.textContent = line ? line + ' ' + word : word;
-    if (line && text.getComputedTextLength() > 184) { lines.push(line); line = ''; }
-    text.textContent = word;
-    if (text.getComputedTextLength() <= 184) { line = line ? line + ' ' + word : word; continue; }
-    for (const segment of new Intl.Segmenter().segment(word)) {
-      text.textContent = line + segment.segment;
-      if (line && text.getComputedTextLength() > 184) { lines.push(line); line = segment.segment; }
-      else line += segment.segment;
-    }
-  }
-  lines.push(line);
-  const lineHeight = parseFloat(getComputedStyle(text).fontSize) * 1.45;
-  const height = Math.max(84, lines.length * lineHeight + 36);
-  text.replaceChildren(...lines.map((line, index) => element('tspan', { x: 20, y: (height - (lines.length - 1) * lineHeight) / 2 + lineHeight / 3 + index * lineHeight }, line)));
-  rect.setAttribute('height', String(height));
-  svg.setAttribute('viewBox', '0 0 224 ' + height);
-  svg.setAttribute('width', '224'); svg.setAttribute('height', String(height));
-}
-
-export async function compileView(input: ProjectInput, viewId: string, host: HTMLElement): Promise<CompiledView> {
-  const doc = parseDocument(input.document);
-  validateTheme(input.themeCss);
-  const view = doc.views[viewId];
-  if (!view) throw new Error('Missing view: ' + viewId);
-  const svg = element('svg', { xmlns: NS, class: 'diagram', role: 'group', 'aria-label': view.title });
-  svg.style.width = '100%'; svg.style.height = '100%';
-  svg.append(element('style', {}, defaultTheme + '\n' + input.themeCss));
-  const scene = element('g', { 'data-scene': '' }); svg.append(scene);
-  const measure = document.createElement('div');
-  measure.style.cssText = 'position:absolute;left:-100000px;top:0;visibility:hidden;width:2000px;height:2000px';
-  measure.append(svg); host.append(measure);
+export async function compileView(input:ProjectInput,viewId:string,host:HTMLElement):Promise<CompiledView> {
+  const doc=normalizeDocument(input.document),view=doc.views[viewId];
+  if(!view)throw new Error('Missing view: '+viewId);validateTheme(input.themeCss);
+  const scope='render-'+(++instance),svg=element('svg',{xmlns:'http://www.w3.org/2000/svg',class:'diagram',role:'group','aria-label':view.title,'data-diagram-type':view.type});
+  svg.style.width='100%';svg.style.height='100%';svg.append(element('style',{},defaultTheme+'\n'+input.themeCss));
+  const scene=element('g',{'data-scene':''}),graph=element('g',{'data-graph':''});scene.append(graph);svg.append(scene);
+  const measure=document.createElement('div');measure.style.cssText='position:absolute;left:-100000px;top:0;visibility:hidden;width:3000px;height:3000px';measure.append(svg);host.append(measure);
   try {
-    const measured = new Map<string, { content: SVGSVGElement; box: DOMRect; width: number; height: number }>();
-    for (const nodeId of view.nodeIds) {
-      const node = doc.nodes[nodeId];
-      const name=node.template ?? 'default',custom=Object.hasOwn(input.templates,name);
-      if(!custom && name!=='default')throw new Error('Unknown template: '+name);
-      const content = instantiateNode(custom?input.templates[name]:defaultNode, nodeId, node);
-      scene.append(content);content.getBBox();await document.fonts.ready;
-      if(!custom)wrapLabel(content, node.label);
-      const box = content.getBBox();
-      if(!Number.isFinite(box.width+box.height) || box.width<=0 || box.height<=0)throw new Error('SVG template has no visible geometry: '+nodeId);
-      measured.set(nodeId, { content, box, width: box.width + 16, height: box.height + 16 });
-      content.remove();
+    const nodes=new Map<string,Awaited<ReturnType<typeof prepareNode>>>(),measurements:ViewMeasurements={nodes:{},edgeLabels:{},groupLabels:{}};
+    for(const id of view.nodeIds){const prepared=await prepareNode(input,doc,viewId,id,scopeId(scope,id),graph);nodes.set(id,prepared);measurements.nodes[id]=prepared.size;}
+    const labelMetrics=new Map<string,Awaited<ReturnType<typeof textMetrics>>>();
+    for(const edge of view.edges)if(edge.label){
+      const text=element('text',{class:'edge-label'});graph.append(text);const metrics=await textMetrics(text),lines=wrapText(text,edge.label,128);
+      textLines(text,lines,0,-metrics.top,metrics.lineHeight);const box=text.getBBox();
+      measurements.edgeLabels[edge.id]={width:box.width+14,height:box.height+8,lines};labelMetrics.set(edge.id,metrics);text.remove();
     }
-    const measureText=async(className:string,label:string):Promise<DOMRect>=>{
-      const text=element('text',{class:className,x:0,y:0},label);scene.append(text);
-      text.getBBox();await document.fonts.ready;
-      const box=text.getBBox();text.remove();return box;
-    };
-    const edgeLabels=new Map<string,DOMRect>(),groupLabels=new Map<string,DOMRect>();
-    for(const edge of view.edges)if(edge.label)edgeLabels.set(edge.id,await measureText('edge-label',edge.label));
-    for(const group of view.groups ?? [])if(group.nodeIds.length)groupLabels.set(group.id,await measureText('group-label',group.label));
-    const groupMembers = new Set((view.groups ?? []).flatMap(group => group.nodeIds));
-    const makeNode = (id: string): ElkNode => ({ id: 'n-' + id, width: measured.get(id)!.width, height: measured.get(id)!.height });
-    const graph: ElkNode = {
-      id: 'root',
-      layoutOptions: { 'elk.algorithm': 'layered', 'elk.direction': 'RIGHT', 'elk.edgeRouting': 'ORTHOGONAL', 'elk.hierarchyHandling': 'INCLUDE_CHILDREN', 'elk.spacing.nodeNode': '36', 'elk.layered.spacing.nodeNodeBetweenLayers': '56', 'elk.padding': '[top=20,left=20,bottom=20,right=20]' },
-      children: [
-        ...(view.groups ?? []).filter(group => group.nodeIds.length).map(group => {
-          const box=groupLabels.get(group.id)!;
-          return {id:'g-'+group.id,children:group.nodeIds.map(makeNode),layoutOptions:{'elk.padding':'[top='+(box.height+32)+',left=20,bottom=20,right=20]','elk.nodeSize.constraints':'MINIMUM_SIZE','elk.nodeSize.minimum':'('+Math.ceil(box.width+40)+',0)'}};
-        }),
-        ...view.nodeIds.filter(id => !groupMembers.has(id)).map(makeNode),
-      ],
-      edges: view.edges.map(edge => ({ id: edge.id, sources: ['n-' + edge.source], targets: ['n-' + edge.target], labels: edge.label ? [{ text: edge.label, width: edgeLabels.get(edge.id)!.width+8, height: edgeLabels.get(edge.id)!.height+8 }] : [] })),
-    };
-    const layout = view.nodeIds.length ? await elk.layout(graph) : graph;
-    const positions = new Map<string, { x: number; y: number }>([['root', { x: 0, y: 0 }]]);
-    const drawNodes = (parent: ElkNode, offsetX = 0, offsetY = 0): void => {
-      for (const child of parent.children ?? []) {
-        const x = offsetX + (child.x ?? 0), y = offsetY + (child.y ?? 0);
-        positions.set(child.id, { x, y });
-        if (child.id.startsWith('g-')) {
-          const group = view.groups!.find(group => 'g-' + group.id === child.id)!;
-          const box=groupLabels.get(group.id)!;
-          const wrapper = element('g', { 'data-group-id': group.id, transform: 'translate(' + x + ',' + y + ')' });
-          wrapper.append(element('rect', { class: 'group-body', rx: 18, width: child.width ?? 0, height: child.height ?? 0 }), element('text', { class: 'group-label', x: 20-box.x, y: 16-box.y }, group.label));
-          scene.append(wrapper); drawNodes(child, x, y);
-        } else {
-          const id = child.id.slice(2), data = measured.get(id)!;
-          const wrapper = element('g', { 'data-node-id': id, transform: 'translate(' + (x + 8 - data.box.x) + ',' + (y + 8 - data.box.y) + ')', role: 'button', tabindex: 0, 'aria-label': doc.nodes[id].label, 'aria-pressed': 'false' });
-          wrapper.append(data.content); scene.append(wrapper);
-        }
+    const headingMetrics=new Map<string,Awaited<ReturnType<typeof textMetrics>>>();
+    for(const group of view.groups){
+      const text=element('text',{class:'group-label'});graph.append(text);const metrics=await textMetrics(text);text.textContent=group.label;const box=text.getBBox();
+      measurements.groupLabels[group.id]={width:box.width,height:box.height};headingMetrics.set(group.id,metrics);text.remove();
+    }
+    const candidates=await layoutCandidates(doc,viewId,measurements);
+    candidates.sort((a,b)=>compareRoutes(assessRoutes(a),assessRoutes(b)));
+    const chosen=candidates[0],layout=view.type==='architecture'?shortenRoutes(chosen):chosen;
+    const defs=element('defs'),kinds=[...new Set(view.edges.map(e=>e.kind))];svg.prepend(defs);
+    for(const kind of kinds){
+      const marker=element('marker',{id:scopeId(scope,'arrow',kind),viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:8,markerHeight:8,orient:'auto',markerUnits:'userSpaceOnUse'});
+      marker.append(element('path',{class:'arrow','data-kind':kind,d:'M1 1L9 5L1 9z',fill:connections[kind].color}));defs.append(marker);
+    }
+    for(const group of layout.groups){
+      const meta=view.groups.find(g=>g.id===group.id)!,wrapper=element('g',{'data-group-id':group.id});
+      wrapper.append(element('rect',{class:'group-body',x:group.x,y:group.y,width:group.width,height:group.height,rx:14,...(group.parentId?{'stroke-dasharray':'4 4'}:{})}),element('text',{class:'group-label',x:group.header.x,y:group.header.y-headingMetrics.get(group.id)!.top},meta.label));graph.append(wrapper);
+    }
+    for(const edge of layout.edges){
+      const token=connections[edge.kind],wrapper=element('g',{'data-edge-id':edge.id,'data-edge-kind':edge.kind});
+      for(const points of edge.paths)wrapper.append(element('path',{class:'edge-path',d:points.map((p,i)=>(i?'L':'M')+p.x+' '+p.y).join(' '),stroke:token.color,'stroke-dasharray':token.dash,'marker-end':'url(#'+scopeId(scope,'arrow',edge.kind)+')'}));
+      for(const label of edge.labels){
+        const text=element('text',{class:'edge-label'}),metrics=labelMetrics.get(edge.id)!;
+        wrapper.append(element('rect',{class:'edge-label-background',x:label.x,y:label.y,width:label.width,height:label.height,rx:4}),text);
+        textLines(text,label.lines,label.x+7,label.y+4-metrics.top,metrics.lineHeight);
       }
-    };
-    drawNodes(layout);
-    const defs = element('defs');
-    const markerId = 'arrow-' + viewId;
-    const marker = element('marker', { id: markerId, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' });
-    marker.append(element('path', { class: 'arrow', d: 'M 0 0 L 10 5 L 0 10 z' })); defs.append(marker); svg.prepend(defs);
-    const drawEdges = (parent: ElkNode): void => {
-      for (const edge of parent.edges ?? []) {
-        const offset = positions.get(edge.container ?? parent.id) ?? { x: 0, y: 0 };
-        const wrapper = element('g', { 'data-edge-id': edge.id, transform: 'translate(' + offset.x + ',' + offset.y + ')' });
-        for (const section of edge.sections ?? []) {
-          const points = [section.startPoint, ...(section.bendPoints ?? []), section.endPoint];
-          wrapper.append(element('path', { class: 'edge-path', d: points.map((p, i) => (i ? 'L' : 'M') + p.x + ' ' + p.y).join(' '), 'marker-end': 'url(#' + markerId + ')' }));
-        }
-        for (const label of edge.labels ?? []) {
-          const box=edgeLabels.get(edge.id)!;
-          wrapper.append(element('text', { class: 'edge-label', x: (label.x ?? 0)+4-box.x, y: (label.y ?? 0)+4-box.y }, label.text ?? ''));
-        }
-        scene.append(wrapper);
+      graph.append(wrapper);
+    }
+    for(const node of layout.nodes){
+      const data=nodes.get(node.id)!,pad=view.legacySizing?8:0;
+      const wrapper=element('g',{'data-node-id':node.id,transform:`translate(${node.x+pad-data.bounds.x} ${node.y+pad-data.bounds.y})`,role:'button',tabindex:0,'aria-label':doc.nodes[node.id].label,'aria-pressed':'false'});
+      wrapper.append(data.svg,element('title',{},doc.nodes[node.id].label+(doc.nodes[node.id].childViewId?' · Has an internal view':'')));graph.append(wrapper);
+    }
+    if(view.legend){
+      const legend=element('g',{'data-legend':''});scene.prepend(legend);
+      legend.append(element('text',{class:'legend-title',x:24,y:28},view.title),element('text',{class:'legend-level',x:24,y:50},view.detailLevel));
+      let x=24;
+      for(const kind of kinds){
+        const token=connections[kind],key=element('text',{class:'legend-key',x:x+36,y:78},token.name);
+        legend.append(element('path',{d:`M${x} 74h27`,fill:'none',stroke:token.color,'stroke-width':1.5,'stroke-dasharray':token.dash,'marker-end':'url(#'+scopeId(scope,'arrow',kind)+')'}),key);x+=key.getBBox().width+64;
       }
-      for (const child of parent.children ?? []) drawEdges(child);
-    };
-    drawEdges(layout);
-    const box = scene.getBBox();
-    const bounds = { x: box.x - 28, y: box.y - 28, width: Math.max(120, box.width + 56), height: Math.max(96, box.height + 56) };
-    svg.setAttribute('viewBox', [bounds.x, bounds.y, bounds.width, bounds.height].join(' '));
-    svg.insertBefore(element('rect', { class: 'canvas-background', ...bounds }), scene);
-    svg.remove();
-    return { viewId, svg, bounds };
-  } finally { measure.remove(); }
+      if(view.nodeIds.some(id=>doc.nodes[id].childViewId))legend.append(element('text',{class:'legend-key',x,y:78},'↗ Internal view'));
+      graph.setAttribute('transform','translate(0 '+(legend.getBBox().y+legend.getBBox().height+32)+')');
+    }
+    const box=scene.getBBox(),bounds={x:box.x-28,y:box.y-28,width:Math.max(120,box.width+56),height:Math.max(96,box.height+56)};
+    svg.setAttribute('viewBox',[bounds.x,bounds.y,bounds.width,bounds.height].join(' '));
+    svg.insertBefore(element('rect',{class:'canvas-background',...bounds}),scene);svg.remove();return {viewId,svg,bounds};
+  } finally {measure.remove();}
 }
 
-export function exportSvg(view: CompiledView): string {
-  const svg = view.svg.cloneNode(true) as SVGSVGElement;
-  svg.setAttribute('viewBox', [view.bounds.x, view.bounds.y, view.bounds.width, view.bounds.height].join(' '));
-  svg.setAttribute('width', String(view.bounds.width)); svg.setAttribute('height', String(view.bounds.height));
-  svg.style.removeProperty('width'); svg.style.removeProperty('height');
-  for (const node of svg.querySelectorAll('[tabindex]')) { node.removeAttribute('tabindex'); node.removeAttribute('aria-pressed'); }
-  return '<?xml version="1.0" encoding="UTF-8"?>\n' + new XMLSerializer().serializeToString(svg);
+export function exportSvg(view:CompiledView):string {
+  const svg=view.svg.cloneNode(true) as SVGSVGElement;
+  svg.setAttribute('viewBox',[view.bounds.x,view.bounds.y,view.bounds.width,view.bounds.height].join(' '));
+  svg.setAttribute('width',String(Math.ceil(view.bounds.width)));svg.setAttribute('height',String(Math.ceil(view.bounds.height)));svg.removeAttribute('style');
+  for(const node of svg.querySelectorAll('[tabindex]'))node.removeAttribute('tabindex');
+  for(const node of svg.querySelectorAll('[aria-pressed]'))node.removeAttribute('aria-pressed');
+  return '<?xml version="1.0" encoding="UTF-8"?>\n'+new XMLSerializer().serializeToString(svg);
 }

@@ -10,11 +10,11 @@ declare global {
 }
 
 test('guards typed graph mutations until typed authoring is available',async({page})=>{
-  const document=JSON.parse(await readFile('examples/architecture-small/diagram.json','utf8'));
+  const input=await readProject('examples/architecture-small');
   await page.setContent('<main id="app"></main>');await page.addScriptTag({path:'dist/test/editor.js'});
-  await page.evaluate(async document=>{
-    await DiagramEditor.mountEditor(window.document.getElementById('app')!,{document,themeCss:'',templates:{},logos:{},revision:'test',documentRevision:'test',sequence:1},{subscribe:()=>()=>{},save:async()=>{throw new Error('Unexpected save');}});
-  },document);
+  await page.evaluate(async input=>{
+    await DiagramEditor.mountEditor(document.getElementById('app')!,{...input,sequence:1},{subscribe:()=>()=>{},save:async()=>{throw new Error('Unexpected save');}});
+  },input);
   await expect(page.getByRole('button',{name:'Add node',exact:true})).toBeDisabled();
   await expect(page.getByRole('button',{name:'Add connection',exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'Order service',exact:true}).click();

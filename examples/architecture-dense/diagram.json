@@ -1,0 +1,566 @@
+{
+  "version": 2,
+  "title": "Commerce platform",
+  "purpose": "Illustrate synthetic architecture and nested boundaries.",
+  "audience": "People evaluating Better Diagrams",
+  "rootViewId": "dense",
+  "nodes": {
+    "client": {
+      "label": "Storefront",
+      "summary": "Places orders and reads account information.",
+      "details": "Places orders and reads account information. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f6f3fc",
+        "border": "#bcb0d5"
+      }
+    },
+    "partner": {
+      "label": "Partner system",
+      "summary": "Submits updates from an external fulfillment partner.",
+      "details": "Submits updates from an external fulfillment partner. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#faf5ef",
+        "border": "#d3bca4"
+      }
+    },
+    "gateway": {
+      "label": "API gateway",
+      "summary": "Routes public requests to the appropriate service.",
+      "details": "Routes public requests to the appropriate service. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      }
+    },
+    "webhooks": {
+      "label": "Webhook receiver",
+      "summary": "Checks inbound partner messages before dispatch.",
+      "details": "Checks inbound partner messages before dispatch. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      }
+    },
+    "orders": {
+      "label": "Order service",
+      "summary": "Coordinates checkout, stock reservations, payment authorization, and order events. This deliberately long summary should be shortened visibly without changing the card size.",
+      "details": "Coordinates checkout, stock reservations, payment authorization, and order events. This deliberately long summary should be shortened visibly without changing the card size. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      },
+      "childViewId": "orders",
+      "logo": "service"
+    },
+    "payments": {
+      "label": "Payment service",
+      "summary": "Authorizes payments and maintains a transaction ledger.",
+      "details": "Authorizes payments and maintains a transaction ledger. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      }
+    },
+    "inventory": {
+      "label": "Inventory service",
+      "summary": "Reserves available stock and confirms fulfillment.",
+      "details": "Reserves available stock and confirms fulfillment. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      },
+      "childViewId": "inventory"
+    },
+    "accounts": {
+      "label": "Account service",
+      "summary": "Resolves identity, session state, and contact information.",
+      "details": "Resolves identity, session state, and contact information. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      }
+    },
+    "ordersdb": {
+      "label": "Order database",
+      "summary": "Stores order state and customer-visible history.",
+      "details": "Stores order state and customer-visible history. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f0f8f5",
+        "border": "#9ac8bb"
+      }
+    },
+    "paymentsdb": {
+      "label": "Payment ledger",
+      "summary": "Records payment attempts and their outcomes.",
+      "details": "Records payment attempts and their outcomes. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f0f8f5",
+        "border": "#9ac8bb"
+      }
+    },
+    "stockdb": {
+      "label": "Stock database",
+      "summary": "Stores inventory levels and active reservations.",
+      "details": "Stores inventory levels and active reservations. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f0f8f5",
+        "border": "#9ac8bb"
+      }
+    },
+    "cache": {
+      "label": "Shared cache",
+      "summary": "Caches sessions and availability snapshots.",
+      "details": "Caches sessions and availability snapshots. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#fcf7ef",
+        "border": "#d8c298"
+      }
+    },
+    "bus": {
+      "label": "Event stream",
+      "summary": "Carries events between request processing and workers.",
+      "details": "Carries events between request processing and workers. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f8f3fc",
+        "border": "#c2aed6"
+      }
+    },
+    "fulfill": {
+      "label": "Fulfillment worker",
+      "summary": "Allocates accepted orders for fulfillment.",
+      "details": "Allocates accepted orders for fulfillment. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#fcf6f0",
+        "border": "#d3b697"
+      }
+    },
+    "notify": {
+      "label": "Notification worker",
+      "summary": "Sends order updates to customers.",
+      "details": "Sends order updates to customers. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#fcf6f0",
+        "border": "#d3b697"
+      }
+    },
+    "reconcile": {
+      "label": "Reconciliation worker",
+      "summary": "Rechecks delayed payment outcomes.",
+      "details": "Rechecks delayed payment outcomes. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#fcf6f0",
+        "border": "#d3b697"
+      }
+    },
+    "logs": {
+      "label": "Structured logs",
+      "summary": "Collects service diagnostics and audit events.",
+      "details": "Collects service diagnostics and audit events. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f6f7f9",
+        "border": "#bbc3cf"
+      }
+    },
+    "metrics": {
+      "label": "Metrics collector",
+      "summary": "Aggregates request and worker health signals.",
+      "details": "Aggregates request and worker health signals. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f6f7f9",
+        "border": "#bbc3cf"
+      }
+    },
+    "orders-validate": {
+      "label": "Request validator",
+      "summary": "Checks the incoming order fields and required identifiers.",
+      "details": "Checks the incoming order fields and required identifiers. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      }
+    },
+    "orders-coordinate": {
+      "label": "Order coordinator",
+      "summary": "Coordinates persistence and the stock reservation.",
+      "details": "Coordinates persistence and the stock reservation. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      }
+    },
+    "orders-repository": {
+      "label": "Order repository",
+      "summary": "Stores the confirmed order and its current state.",
+      "details": "Stores the confirmed order and its current state. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f0f8f5",
+        "border": "#9ac8bb"
+      }
+    },
+    "orders-stock": {
+      "label": "Stock client",
+      "summary": "Talks to the inventory service through a narrow interface.",
+      "details": "Talks to the inventory service through a narrow interface. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      },
+      "childViewId": "inventory"
+    },
+    "inventory-check": {
+      "label": "Availability check",
+      "summary": "Reads current availability before reserving stock.",
+      "details": "Reads current availability before reserving stock. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      }
+    },
+    "inventory-reserve": {
+      "label": "Reservation writer",
+      "summary": "Writes the reservation against the current stock version.",
+      "details": "Writes the reservation against the current stock version. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f2f6fd",
+        "border": "#a1b7d8"
+      }
+    },
+    "inventory-stock": {
+      "label": "Stock store",
+      "summary": "Keeps stock levels and active reservations.",
+      "details": "Keeps stock levels and active reservations. This is illustrative example data, not a claim extracted from a repository.",
+      "appearance": {
+        "background": "#f0f8f5",
+        "border": "#9ac8bb"
+      }
+    }
+  },
+  "views": {
+    "dense": {
+      "type": "architecture",
+      "title": "Commerce platform",
+      "detailLevel": "Service relationships · nested boundaries",
+      "nodeIds": [
+        "client",
+        "partner",
+        "gateway",
+        "webhooks",
+        "orders",
+        "payments",
+        "inventory",
+        "accounts",
+        "ordersdb",
+        "paymentsdb",
+        "stockdb",
+        "cache",
+        "bus",
+        "fulfill",
+        "notify",
+        "reconcile",
+        "logs",
+        "metrics"
+      ],
+      "edges": [
+        {
+          "id": "client-gateway",
+          "source": "client",
+          "target": "gateway",
+          "label": "HTTPS",
+          "kind": "call"
+        },
+        {
+          "id": "partner-webhooks",
+          "source": "partner",
+          "target": "webhooks",
+          "label": "Partner updates",
+          "kind": "call"
+        },
+        {
+          "id": "gateway-orders",
+          "source": "gateway",
+          "target": "orders",
+          "label": "Create order",
+          "kind": "call"
+        },
+        {
+          "id": "gateway-accounts",
+          "source": "gateway",
+          "target": "accounts",
+          "label": "Check identity",
+          "kind": "call"
+        },
+        {
+          "id": "orders-payments",
+          "source": "orders",
+          "target": "payments",
+          "label": "Authorize payment",
+          "kind": "call"
+        },
+        {
+          "id": "orders-inventory",
+          "source": "orders",
+          "target": "inventory",
+          "label": "Reserve stock",
+          "kind": "call"
+        },
+        {
+          "id": "accounts-cache",
+          "source": "accounts",
+          "target": "cache",
+          "label": "Read session",
+          "kind": "data"
+        },
+        {
+          "id": "orders-ordersdb",
+          "source": "orders",
+          "target": "ordersdb",
+          "label": "Write order",
+          "kind": "data"
+        },
+        {
+          "id": "payments-paymentsdb",
+          "source": "payments",
+          "target": "paymentsdb",
+          "label": "Write ledger",
+          "kind": "data"
+        },
+        {
+          "id": "inventory-stockdb",
+          "source": "inventory",
+          "target": "stockdb",
+          "label": "Hold stock",
+          "kind": "data"
+        },
+        {
+          "id": "inventory-cache",
+          "source": "inventory",
+          "target": "cache",
+          "label": "Read availability",
+          "kind": "data"
+        },
+        {
+          "id": "orders-bus",
+          "source": "orders",
+          "target": "bus",
+          "label": "Order accepted",
+          "kind": "event"
+        },
+        {
+          "id": "webhooks-bus",
+          "source": "webhooks",
+          "target": "bus",
+          "label": "Partner update received",
+          "kind": "event"
+        },
+        {
+          "id": "bus-fulfill",
+          "source": "bus",
+          "target": "fulfill",
+          "label": "Allocate work",
+          "kind": "event"
+        },
+        {
+          "id": "bus-notify",
+          "source": "bus",
+          "target": "notify",
+          "label": "Notify customer",
+          "kind": "event"
+        },
+        {
+          "id": "bus-reconcile",
+          "source": "bus",
+          "target": "reconcile",
+          "label": "Recheck payment",
+          "kind": "event"
+        },
+        {
+          "id": "fulfill-inventory",
+          "source": "fulfill",
+          "target": "inventory",
+          "label": "Confirm stock",
+          "kind": "call"
+        },
+        {
+          "id": "reconcile-payments",
+          "source": "reconcile",
+          "target": "payments",
+          "label": "Recheck authorization",
+          "kind": "call"
+        },
+        {
+          "id": "notify-accounts",
+          "source": "notify",
+          "target": "accounts",
+          "label": "Resolve contact",
+          "kind": "call"
+        },
+        {
+          "id": "orders-logs",
+          "source": "orders",
+          "target": "logs",
+          "label": "Order diagnostics",
+          "kind": "telemetry"
+        },
+        {
+          "id": "payments-logs",
+          "source": "payments",
+          "target": "logs",
+          "label": "Payment diagnostics",
+          "kind": "telemetry"
+        },
+        {
+          "id": "fulfill-metrics",
+          "source": "fulfill",
+          "target": "metrics",
+          "label": "Worker health",
+          "kind": "telemetry"
+        },
+        {
+          "id": "gateway-metrics",
+          "source": "gateway",
+          "target": "metrics",
+          "label": "Request latency",
+          "kind": "telemetry"
+        }
+      ],
+      "groups": [
+        {
+          "id": "platform",
+          "label": "COMMERCE PLATFORM",
+          "nodeIds": []
+        },
+        {
+          "id": "edge",
+          "label": "Edge",
+          "nodeIds": [
+            "gateway",
+            "webhooks"
+          ],
+          "parentId": "platform"
+        },
+        {
+          "id": "core",
+          "label": "Core services",
+          "nodeIds": [
+            "orders",
+            "payments",
+            "inventory",
+            "accounts"
+          ],
+          "parentId": "platform"
+        },
+        {
+          "id": "storage",
+          "label": "Data stores",
+          "nodeIds": [
+            "ordersdb",
+            "paymentsdb",
+            "stockdb",
+            "cache"
+          ],
+          "parentId": "platform"
+        },
+        {
+          "id": "background",
+          "label": "Background processing",
+          "nodeIds": [
+            "bus"
+          ],
+          "parentId": "platform"
+        },
+        {
+          "id": "workers",
+          "label": "Workers",
+          "nodeIds": [
+            "fulfill",
+            "notify",
+            "reconcile"
+          ],
+          "parentId": "background"
+        },
+        {
+          "id": "ops",
+          "label": "Observability",
+          "nodeIds": [
+            "logs",
+            "metrics"
+          ],
+          "parentId": "platform"
+        }
+      ]
+    },
+    "orders": {
+      "type": "architecture",
+      "title": "Order service",
+      "detailLevel": "Component internals",
+      "nodeIds": [
+        "orders-validate",
+        "orders-coordinate",
+        "orders-repository",
+        "orders-stock"
+      ],
+      "edges": [
+        {
+          "id": "orders-validate-coordinate",
+          "source": "orders-validate",
+          "target": "orders-coordinate",
+          "label": "Validated request",
+          "kind": "call"
+        },
+        {
+          "id": "orders-coordinate-repository",
+          "source": "orders-coordinate",
+          "target": "orders-repository",
+          "label": "Persist order",
+          "kind": "data"
+        },
+        {
+          "id": "orders-coordinate-stock",
+          "source": "orders-coordinate",
+          "target": "orders-stock",
+          "label": "Reserve inventory",
+          "kind": "call"
+        }
+      ],
+      "groups": [
+        {
+          "id": "service",
+          "label": "ORDER SERVICE",
+          "nodeIds": [
+            "orders-validate",
+            "orders-coordinate",
+            "orders-repository",
+            "orders-stock"
+          ]
+        }
+      ]
+    },
+    "inventory": {
+      "type": "architecture",
+      "title": "Inventory service",
+      "detailLevel": "Reservation internals",
+      "nodeIds": [
+        "inventory-check",
+        "inventory-reserve",
+        "inventory-stock"
+      ],
+      "edges": [
+        {
+          "id": "inventory-check-reserve",
+          "source": "inventory-check",
+          "target": "inventory-reserve",
+          "label": "Available stock",
+          "kind": "call"
+        },
+        {
+          "id": "inventory-reserve-stock",
+          "source": "inventory-reserve",
+          "target": "inventory-stock",
+          "label": "Atomic reservation",
+          "kind": "data"
+        }
+      ],
+      "groups": []
+    }
+  }
+}

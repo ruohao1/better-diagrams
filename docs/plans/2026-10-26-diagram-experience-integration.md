@@ -42,6 +42,7 @@ These engineering choices turn the approved behavior into an implementable contr
 - Logos are optional `logos/NAME.svg` files. Use the existing inert SVG policy; no logo downloads, raster loading, or new icon dependency in this pass.
 - Default architecture preset is `standard` (252 × 136). Also provide `compact` (224 × 128) and `large` (288 × 152). These extra preset dimensions are builder choices; the standard dimensions come from the prototype. Flowchart defaults match the prototype: action 222 × 84, decision 174 × 108, terminals 154 × 48.
 - Keep the bounded route simplifier and ELK fallback. Do not promise a globally optimal or crossing-free result. The production pass must check more than the prototype's crossing count.
+- During integration, enforce a 12-unit minimum for custom v2 template text after uniform scaling. Oversized template viewBoxes must not make readable source text tiny in the fixed footprint.
 - Advanced authoring of views, boundaries, main paths, logos, and appearance remains file-based. Browser editing adds summaries, flowchart step kinds, and connection kinds/labels to the existing graph/text controls.
 
 ## Current code and file map
@@ -244,7 +245,7 @@ Invoke the authoring-controls hook in the root and active modal frames. The edit
 
 **Interfaces:** Consumes Tasks 1–3. Produces `prepareNode` and architecture `layoutCandidates`; keeps `compileView`/`exportSvg` compatible. Add optional Playwright fixture option `projectPath` with default `examples/skill-install` to select v2 projects.
 
-- [ ] **Step 1: Write failing browser tests.** Assert equal architecture footprints per view; correct preset dimensions; logo placement; measured two-line titles; summary ellipsis with unchanged source; nested parent/child containment; finite empty bounds; and a legend containing only used kinds/title/level. Test `legend: false`. Keep v1 long Unicode wrapping and custom assets working. For v2, a title that cannot fit produces an error naming its node/preset rather than shrinking or silently clipping. Large themed fonts and custom-template overflow must follow that rule. Verify:
+- [x] **Step 1: Write failing browser tests.** Assert equal architecture footprints per view; correct preset dimensions; logo placement; measured two-line titles; summary ellipsis with unchanged source; nested parent/child containment; finite empty bounds; and a legend containing only used kinds/title/level. Test `legend: false`. Keep v1 long Unicode wrapping and custom assets working. For v2, a title that cannot fit produces an error naming its node/preset rather than shrinking or silently clipping. Large themed fonts and custom-template overflow must follow that rule. Verify:
   ```ts
   expect(new Set(nodeSizes).size).toBe(1);
   expect(nodeSizes[0]).toBe('252x136');
@@ -253,10 +254,10 @@ Invoke the authoring-controls hook in the root and active modal frames. The edit
   expect(allContentInsideExportBounds).toBe(true);
   ```
   Port the dense feedback check against the actual compiled SVG: no fixture-specific routing code, at most two turns and under 1,500 units for the reported connection, clear unrelated boundaries, preserved labels and metadata. Check every modified route, not just the headline example.
-- [ ] **Step 2: Run** `npm run build && npx --no-install playwright test test/browser/architecture.spec.ts test/browser/layout.spec.ts test/browser/customization.spec.ts --project=chromium`. Expected: FAIL on fixed cards/nested boundaries/legend behavior.
-- [ ] **Step 3: Implement** the compiler pipeline. Measure actual applied SVG/CSS after fonts load, including node/edge/header text. Use generated nested ELK graphs, flatten absolute scene coordinates, compare candidates, then simplify routes without moving the chosen nodes. Draw typed styles and the optional legend as SVG content. Apply explicit safe node colors to their own geometry while retaining theme customization. Give custom v2 templates the chosen fixed footprint, uniformly fit their declared viewBox, and reject bound text/geometry outside that viewBox; keep v1 intrinsic behavior. Scope all local IDs by render instance.
-- [ ] **Step 4: Run** Step 2 plus `npm run check && node --test test/routing.test.ts`. Expected: PASS, no lost Unicode text, unsafe assets, or export-bound regressions. Visually inspect small and dense SVGs at readable scale; do not assert a global optimum from the prototype's count of ten crossings.
-- [ ] **Step 5: Commit** as `feat: render fixed architecture nodes and nested boundaries`.
+- [x] **Step 2: Run** `npm run build && npx --no-install playwright test test/browser/architecture.spec.ts test/browser/layout.spec.ts test/browser/customization.spec.ts --project=chromium`. Expected: FAIL on fixed cards/nested boundaries/legend behavior.
+- [x] **Step 3: Implement** the compiler pipeline. Measure actual applied SVG/CSS after fonts load, including node/edge/header text. Use generated nested ELK graphs, flatten absolute scene coordinates, compare candidates, then simplify routes without moving the chosen nodes. Draw typed styles and the optional legend as SVG content. Apply explicit safe node colors to their own geometry while retaining theme customization. Give custom v2 templates the chosen fixed footprint, uniformly fit their declared viewBox, and reject bound text/geometry outside that viewBox; keep v1 intrinsic behavior. Scope all local IDs by render instance.
+- [x] **Step 4: Run** Step 2 plus `npm run check && node --test test/routing.test.ts`. Expected: PASS, no lost Unicode text, unsafe assets, or export-bound regressions. Visually inspect small and dense SVGs at readable scale; do not assert a global optimum from the prototype's count of ten crossings.
+- [x] **Step 5: Commit** as `feat: render fixed architecture nodes and nested boundaries`.
 
 ### Task 5: Add flowchart shapes and authored main paths
 

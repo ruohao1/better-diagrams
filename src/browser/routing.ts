@@ -102,4 +102,3 @@ export function shortenRoutes(scene:LayoutScene):LayoutScene {
   }
   return result;
 }
-
