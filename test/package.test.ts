@@ -30,7 +30,7 @@ test('packed CLI installs offline outside the checkout and builds a working offl
     const artifact=join(dir,'diagram.html');run(binary,['build',project,'--out',artifact]);
     const browser=await chromium.launch({headless:true,executablePath:existsSync('/usr/bin/google-chrome')?'/usr/bin/google-chrome':undefined,args:['--no-sandbox']});
     try {
-      const context=await browser.newContext({offline:true});const page=await context.newPage();await page.goto(pathToFileURL(artifact).href);
+      const context=await browser.newContext({offline:true});const page=await context.newPage();await page.goto(pathToFileURL(artifact).href);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();
       await page.getByRole('button',{name:'Verify installed content',exact:true}).click();
       assert.equal(await page.getByRole('heading',{name:'Verify installed content',exact:true}).isVisible(),true);
       await page.getByRole('button',{name:'Explore internals'}).click();await page.getByRole('button',{name:'Compare fingerprints',exact:true}).waitFor();

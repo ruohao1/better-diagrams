@@ -7,12 +7,13 @@ const attributes=new Set(('id class viewBox width height x y x1 x2 y1 y2 cx cy r
 // shortcut: CSS escapes and image functions are rejected; add a CSS parser if themes need them.
 export function validateTheme(css:string):void {
   const clean=css.replace(/\/\*[\s\S]*?\*\//g,'');
-  if(/\\|@import|@namespace|https?:|file:|javascript:|blob:|\/\/|\b(?:image-set|image|cross-fade|paint|element)\s*\(/i.test(clean))throw new Error('Stylesheet must use self-contained resources; imports, escapes and remote resources are unsupported');
-  for(const match of clean.matchAll(/url\s*\(\s*([^)]*)\)/gi)){
-    const value=match[1].trim().replace(/^(['"])(.*)\1$/,'$2');
+  const outsideUrls=clean.replace(/url\s*\(\s*([^)]*)\)/gi,(_match:string,argument:string)=>{
+    const value=argument.trim().replace(/^(['"])(.*)\1$/,'$2');
     if(!/^#[A-Za-z][A-Za-z0-9_-]*$/.test(value) && !/^data:(?:font\/(?:woff2?|ttf|otf)|image\/(?:png|jpeg|gif|webp));base64,[A-Za-z0-9+/=\s]+$/i.test(value))throw new Error('Stylesheet URL must be a local fragment or supported base64 data asset');
-  }
-  if(/url\s*\(/i.test(clean.replace(/url\s*\([^)]*\)/gi,'')))throw new Error('Invalid stylesheet URL');
+    return '';
+  });
+  if(/\\|@import|@namespace|https?:|file:|javascript:|blob:|\/\/|\b(?:image-set|image|cross-fade|paint|element)\s*\(/i.test(outsideUrls))throw new Error('Stylesheet must use self-contained resources; imports, escapes and remote resources are unsupported');
+  if(/url\s*\(/i.test(outsideUrls))throw new Error('Invalid stylesheet URL');
 }
 
 function parseInertSvg(template: string, scope: string): SVGSVGElement {

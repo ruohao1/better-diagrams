@@ -2,6 +2,7 @@ import type {ProjectInput,RenderDocument} from '../model.ts';
 import type {Rect,Size} from './geometry.ts';
 import defaultNode from './default-node.svg';
 import {instantiateLogo,instantiateNode,scopeId} from './templates.ts';
+import {applyFonts} from './fonts.ts';
 
 const NS='http://www.w3.org/2000/svg';
 export function element<K extends keyof SVGElementTagNameMap>(tag:K,attributes:Record<string,string|number>={},text?:string):SVGElementTagNameMap[K] {
@@ -23,6 +24,7 @@ export function wrapText(text:SVGTextElement,value:string,width:number):string[]
   if(line)lines.push(line);text.textContent='';return lines;
 }
 export async function textMetrics(text:SVGTextElement):Promise<{height:number;top:number;lineHeight:number}> {
+  applyFonts(text);
   text.textContent='Mg';text.getBBox();await document.fonts.ready;
   const box=text.getBBox();return {height:box.height,top:box.y,lineHeight:parseFloat(getComputedStyle(text).fontSize)*1.4};
 }
@@ -42,6 +44,7 @@ export async function prepareNode(input:ProjectInput,doc:RenderDocument,viewId:s
   const fail=(message:string):never=>{throw new Error(nodeId+' ('+view.nodeSize+'): '+message);};
   let svg=view.legacySizing || custom ? instantiateNode(custom?input.templates[name]:defaultNode,scopeId(scope,'template'),node) : element('svg',{viewBox:`0 0 ${size.width} ${size.height}`,width:size.width,height:size.height});
   stage.append(svg);
+  applyFonts(svg);
   try {
     if(view.legacySizing){
       svg.getBBox();await document.fonts.ready;
@@ -73,6 +76,7 @@ export async function prepareNode(input:ProjectInput,doc:RenderDocument,viewId:s
     if(node.logo){
       if(!Object.hasOwn(input.logos,node.logo))fail('Unknown logo: '+node.logo);
       const logo=instantiateLogo(input.logos[node.logo],scopeId(scope,'logo'));logo.setAttribute('data-logo','');svg.append(logo);
+      applyFonts(logo);
       const box=logo.getBBox(),vb=logo.viewBox.baseVal;
       if(!within(box,vb.width,vb.height)||box.width<=0||box.height<=0)fail('Logo geometry exceeds its viewBox');
       for(const [key,value] of Object.entries({x:16,y:16,width:32,height:32}))logo.setAttribute(key,String(value));logo.style.overflow='hidden';

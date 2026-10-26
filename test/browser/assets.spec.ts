@@ -26,3 +26,15 @@ test('rejects active and remote logo content before attaching it',async({page})=
   });
   expect(rejected).toEqual([true,true,true,true,true]);
 });
+
+test('accepts supported data URLs with slash pairs without allowing remote CSS resources',async({page})=>{
+  await page.setContent('<main></main>');await page.addScriptTag({path:'dist/test/templates.js'});
+  const accepted=await page.evaluate(()=>{
+    const values=['@font-face{font-family:Test;src:url(data:font/ttf;base64,/wD//w==)}',
+      '.node-body{fill:url(data:image/png;base64,/wD//w==)}',
+      '@import url(data:font/ttf;base64,/wD//w==);',
+      '@font-face{src:url(https://example.invalid/font.woff2)}'];
+    return values.map(css=>{try{DiagramTemplates.validateTheme(css);return true;}catch{return false;}});
+  });
+  expect(accepted).toEqual([true,true,false,false]);
+});

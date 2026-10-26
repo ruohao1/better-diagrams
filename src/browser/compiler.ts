@@ -6,6 +6,7 @@ import {element,prepareNode,textLines,textMetrics,wrapText} from './nodes.ts';
 import {layoutCandidates} from './layout.ts';
 import {assessRoutes,compareRoutes,shortenRoutes} from './routing.ts';
 import type {Rect,ViewMeasurements} from './geometry.ts';
+import {applyFonts,installFonts} from './fonts.ts';
 
 export type Bounds=Rect;
 export type CompiledView={viewId:string;svg:SVGSVGElement;bounds:Bounds};
@@ -19,7 +20,8 @@ export async function compileView(input:ProjectInput,viewId:string,host:HTMLElem
   const doc=normalizeDocument(input.document),view=doc.views[viewId];
   if(!view)throw new Error('Missing view: '+viewId);validateTheme(input.themeCss);
   const scope='render-'+(++instance),svg=element('svg',{xmlns:'http://www.w3.org/2000/svg',class:'diagram',role:'group','aria-label':view.title,'data-diagram-type':view.type});
-  svg.style.width='100%';svg.style.height='100%';svg.append(element('style',{},defaultTheme+'\n'+input.themeCss));
+  const theme=await installFonts(input.themeCss,svg);
+  svg.style.width='100%';svg.style.height='100%';svg.append(element('style',{},defaultTheme+'\n'+theme));
   const scene=element('g',{'data-scene':''}),graph=element('g',{'data-graph':''});scene.append(graph);svg.append(scene);
   const measure=document.createElement('div');measure.style.cssText='position:absolute;left:-100000px;top:0;visibility:hidden;width:3000px;height:3000px';measure.append(svg);host.append(measure);
   try {
@@ -69,11 +71,12 @@ export async function compileView(input:ProjectInput,viewId:string,host:HTMLElem
       let x=24;
       for(const kind of kinds){
         const token=connections[kind],key=element('text',{class:'legend-key',x:x+36,y:78},token.name);
-        legend.append(element('path',{d:`M${x} 74h27`,fill:'none',stroke:token.color,'stroke-width':1.5,'stroke-dasharray':token.dash,'marker-end':'url(#'+scopeId(scope,'arrow',kind)+')'}),key);x+=key.getBBox().width+64;
+        legend.append(element('path',{d:`M${x} 74h27`,fill:'none',stroke:token.color,'stroke-width':1.5,'stroke-dasharray':token.dash,'marker-end':'url(#'+scopeId(scope,'arrow',kind)+')'}),key);applyFonts(key);x+=key.getBBox().width+64;
       }
       if(view.nodeIds.some(id=>doc.nodes[id].childViewId))legend.append(element('text',{class:'legend-key',x,y:78},'↗ Internal view'));
       graph.setAttribute('transform','translate(0 '+(legend.getBBox().y+legend.getBBox().height+32)+')');
     }
+    applyFonts(svg);
     const box=scene.getBBox(),bounds={x:box.x-28,y:box.y-28,width:Math.max(120,box.width+56),height:Math.max(96,box.height+56)};
     svg.setAttribute('viewBox',[bounds.x,bounds.y,bounds.width,bounds.height].join(' '));
     svg.insertBefore(element('rect',{class:'canvas-background',...bounds}),scene);svg.remove();return {viewId,svg,bounds};

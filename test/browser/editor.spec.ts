@@ -23,7 +23,7 @@ test('guards typed graph mutations until typed authoring is available',async({pa
 });
 
 test('roundtrips content, nodes and edges while preserving other views and metadata',async({page,session})=>{
-  await page.goto(session.url);
+  await page.goto(session.url);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();
   await page.getByRole('button',{name:'Save installation receipt',exact:true}).click();
   await page.getByLabel('Label',{exact:true}).fill('Saved receipt');
   await page.getByLabel('Details',{exact:true}).fill('A browser edit.');
@@ -33,9 +33,10 @@ test('roundtrips content, nodes and edges while preserving other views and metad
   expect(saved.document.nodes.receipt.references).toEqual(session.input.document.nodes.receipt.references);
   expect(saved.document.nodes.receipt.data).toEqual(session.input.document.nodes.receipt.data);
   expect(saved.document.nodes.receipt.details).toBe('A browser edit.');
+  await page.keyboard.press('Escape');
   await page.getByLabel('New node label',{exact:true}).fill('Notify');
   await page.getByRole('button',{name:'Add node',exact:true}).click();
-  const node=page.getByRole('button',{name:'Notify',exact:true});await expect(node).toBeVisible();
+  const node=page.getByRole('button',{name:'Notify',exact:true});await expect(node).toHaveCount(1);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();await expect(node).toBeVisible();
   const id=(await node.getAttribute('data-node-id'))!;
   await page.getByLabel('Connection source',{exact:true}).selectOption('receipt');
   await page.getByLabel('Connection target',{exact:true}).selectOption(id);
@@ -56,14 +57,14 @@ test('roundtrips content, nodes and edges while preserving other views and metad
   expect(saved.document.views.overview.edges.some(e=>e.source==='receipt'||e.target==='receipt')).toBe(false);
   await page.getByRole('button',{name:'Verify installed content',exact:true}).click();await page.getByRole('button',{name:'Explore internals'}).click();
   await expect(page.getByRole('button',{name:'Saved receipt',exact:true})).toBeVisible();
-  await expect(page.getByLabel('Connection source',{exact:true}).locator('option')).toHaveCount(5);
+  await expect(page.getByRole('dialog').getByLabel('Connection source',{exact:true}).locator('option')).toHaveCount(5);
 });
 
 test('refreshes clean sources and preserves a dirty draft on external conflict',async({page,session})=>{
-  await page.goto(session.url);await expect(page.getByRole('button',{name:'Save changes',exact:true})).toBeVisible();
+  await page.goto(session.url);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();await expect(page.getByRole('button',{name:'Save changes',exact:true})).toBeVisible();
   const changed=structuredClone(session.input.document);changed.title='Updated from files';
   await writeFile(join(session.dir,'diagram.json'),JSON.stringify(changed));
-  await expect(page.getByRole('heading',{name:'Updated from files',exact:true})).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('Updated from files');
   await page.getByRole('button',{name:'Save installation receipt',exact:true}).click();
   await page.getByLabel('Label',{exact:true}).fill('Unsaved draft');
   changed.title='External changes';changed.nodes.receipt.label='From disk';
@@ -73,8 +74,8 @@ test('refreshes clean sources and preserves a dirty draft on external conflict',
   const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Download draft',exact:true}).click();
   const download=await downloadPromise;expect(JSON.parse(await readFile((await download.path())!,'utf8')).nodes.receipt.label).toBe('Unsaved draft');
   await page.getByRole('button',{name:'Reload files (discard draft)',exact:true}).click();
-  await expect(page.getByRole('heading',{name:'External changes',exact:true})).toBeVisible();
-  await expect(page.getByRole('button',{name:'From disk',exact:true})).toBeVisible();
+  await expect(page.getByLabel('Label',{exact:true})).toHaveValue('From disk');
+  expect((await readProject(session.dir)).document.title).toBe('External changes');
 });
 
 test('orders source events, preserves style-only drafts, and handles save echoes and rejection',async({page,session})=>{
@@ -92,14 +93,14 @@ test('orders source events, preserves style-only drafts, and handles save echoes
       },
     });
   },initial);
+  await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();
   await page.getByRole('button',{name:'Save installation receipt',exact:true}).click();
   await page.getByLabel('Label',{exact:true}).fill('Draft label');
   await page.evaluate(initial=>editorHarness.emit({type:'snapshot',snapshot:{...initial,sequence:2,revision:'styled',themeCss:'.node-body{fill:#eef7ff}'}}),initial);
   await expect(page.getByLabel('Label',{exact:true})).toHaveValue('Draft label');
   await page.getByRole('button',{name:'Save changes',exact:true}).click();await expect(page.getByRole('status')).toHaveText('Saved');
   await page.evaluate(initial=>editorHarness.emit({type:'snapshot',snapshot:{...initial,sequence:1}}),initial);
-  await expect(page.getByRole('button',{name:'Draft label',exact:true})).toBeVisible();
-  await page.getByRole('button',{name:'Draft label',exact:true}).click();
+  await expect(page.locator('[data-node-id=receipt]')).toHaveAttribute('aria-label','Draft label');
   await page.getByLabel('Label',{exact:true}).fill('Preserved after rejection');
   await page.evaluate(()=>{editorHarness.failSave=true;});
   await page.getByRole('button',{name:'Save changes',exact:true}).click();
@@ -108,7 +109,7 @@ test('orders source events, preserves style-only drafts, and handles save echoes
 });
 
 test('reports invalid source as a validation error and recovers the live view',async({page,session})=>{
-  await page.goto(session.url);await expect(page.getByRole('button',{name:'Select skill',exact:true})).toBeVisible();
+  await page.goto(session.url);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();await expect(page.getByRole('button',{name:'Select skill',exact:true})).toBeVisible();
   await writeFile(join(session.dir,'diagram.json'),'{broken');
   await expect(page.getByRole('status')).toContainText('Source error:');
   await expect(page.getByRole('status')).not.toContainText('Connection lost');
@@ -121,11 +122,12 @@ test('keeps newly opened node fields disabled until a pending save finishes',asy
   let release!:()=>void;const pending=new Promise<void>(resolve=>{release=resolve;});
   await page.route('**/api/document',async route=>{await pending;await route.continue();});
   try {
-    await page.goto(session.url);
+    await page.goto(session.url);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();
     await page.getByRole('button',{name:'Select skill',exact:true}).click();
     await page.getByLabel('Label',{exact:true}).fill('Chosen skill');
     await page.getByRole('button',{name:'Save changes',exact:true}).click();
     await expect(page.getByRole('status')).toHaveText('Saving…');
+    await page.keyboard.press('Escape');
     await page.getByRole('button',{name:'Save installation receipt',exact:true}).click();
     await expect(page.getByLabel('Label',{exact:true})).toBeDisabled();
     await expect(page.getByLabel('Details',{exact:true})).toBeDisabled();

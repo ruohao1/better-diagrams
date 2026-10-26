@@ -53,7 +53,7 @@ test('rejects active templates and non-self-contained stylesheet resources',asyn
 });
 
 test('updates templates and geometry live without erasing an unsaved browser draft',async({page,session})=>{
-  await page.goto(session.url);await expect(page.getByRole('button',{name:'Select skill',exact:true})).toBeVisible();
+  await page.goto(session.url);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();await expect(page.getByRole('button',{name:'Select skill',exact:true})).toBeVisible();
   await mkdir(join(session.dir,'templates'),{recursive:true});await writeFile(join(session.dir,'templates/service.svg'),template);
   const changed=structuredClone(session.input.document);changed.nodes.select.template='service';changed.nodes.fingerprint.template='service';
   await writeFile(join(session.dir,'diagram.json'),JSON.stringify(changed));
@@ -69,7 +69,7 @@ test('updates templates and geometry live without erasing an unsaved browser dra
   expect(xml).toContain('Unsaved styled node');expect(xml).toContain('26px');expect(xml).not.toMatch(/foreignObject|bd-editor-bar|bd-details/);
   await writeFile(join(session.dir,'templates/service.svg'),'<svg');
   await expect(page.getByRole('alert')).toContainText('SVG');
-  await expect(page.getByRole('button',{name:'Unsaved styled node',exact:true})).toBeVisible();
+  await expect(page.locator('[data-node-id=select]')).toHaveAttribute('aria-label','Unsaved styled node');
   await writeFile(join(session.dir,'templates/service.svg'),template);
   await expect(page.getByRole('alert')).toBeHidden();
   await expect(page.getByRole('status')).toHaveText('Unsaved changes');
@@ -78,10 +78,10 @@ test('updates templates and geometry live without erasing an unsaved browser dra
   await writeFile(artifact,buildStandaloneHtml(await readProject(session.dir),await readFile('dist/viewer.js','utf8')));
   const offline=await page.context().newPage();const requests:string[]=[];
   offline.on('request',request=>{if(/^https?:/.test(request.url()))requests.push(request.url());});
-  await offline.route(/^https?:/,route=>route.abort());await offline.goto(pathToFileURL(artifact).href);
+  await offline.route(/^https?:/,route=>route.abort());await offline.goto(pathToFileURL(artifact).href);await offline.locator('.bd-root-frame .bd-canvas').hover();await offline.getByRole('button',{name:'Fit',exact:true}).click();
   await offline.getByRole('button',{name:'Verify installed content',exact:true}).click();await offline.getByRole('button',{name:'Explore internals'}).click();
   await expect(offline.locator('[data-node-id="fingerprint"] .node-body')).toHaveAttribute('rx','20');
-  await offline.getByRole('button',{name:'Zoom in',exact:true}).click();
+  await offline.getByRole('dialog').locator('.bd-canvas').hover();await offline.getByRole('button',{name:'Zoom in',exact:true}).click();
   const internalDownload=offline.waitForEvent('download');await offline.getByRole('button',{name:'Export SVG',exact:true}).click();
   const internal=await readFile((await (await internalDownload).path())!,'utf8');
   expect(internal).toContain('data-node-id="fingerprint"');expect(internal).not.toContain('data-node-id="install"');expect(requests).toEqual([]);
