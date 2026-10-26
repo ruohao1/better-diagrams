@@ -20,7 +20,11 @@ export async function layoutCandidates(doc:RenderDocument,viewId:string,measurem
     };
     const children=(parent?:string):ElkNode[]=>[
       ...view.nodeIds.filter(id=>directGroup.get(id)===parent).map(makeNode),
-      ...view.groups.filter(g=>g.parentId===parent).map(group=>({id:'g-'+group.id,children:children(group.id),layoutOptions:{'elk.direction':direction,'elk.padding':`[top=${measurements.groupLabels[group.id].height+32},left=20,bottom=20,right=20]`,'elk.nodeSize.constraints':'MINIMUM_SIZE','elk.nodeSize.minimum':`(${Math.ceil(measurements.groupLabels[group.id].width+40)},0)`}})),
+      ...view.groups.filter(g=>g.parentId===parent).map(group=>{
+        const nested=children(group.id),heading=measurements.groupLabels[group.id],minWidth=Math.ceil(heading.width+40);
+        const minHeight=nested.length?0:Math.ceil(heading.height+52);
+        return {id:'g-'+group.id,children:nested,...(nested.length?{}:{width:minWidth,height:minHeight}),layoutOptions:{'elk.direction':direction,'elk.padding':`[top=${heading.height+32},left=20,bottom=20,right=20]`,'elk.nodeSize.constraints':'MINIMUM_SIZE','elk.nodeSize.minimum':`(${minWidth},${minHeight})`}};
+      }),
     ];
     const graph:ElkNode={id:'root',layoutOptions:{'elk.algorithm':'layered','elk.direction':direction,'elk.edgeRouting':'ORTHOGONAL','elk.hierarchyHandling':'INCLUDE_CHILDREN','elk.spacing.nodeNode':String(spacing),'elk.layered.spacing.nodeNodeBetweenLayers':String(spacing+12),'elk.spacing.edgeNode':'18','elk.spacing.edgeEdge':'14','elk.padding':'[top=24,left=24,bottom=24,right=24]','elk.layered.nodePlacement.favorStraightEdges':'true','elk.randomSeed':'7'},children:children(),edges:view.edges.map(edge=>{
       const primary=main.has(edge.id),opposite:Record<string,string>={e:'w',w:'e',n:'s',s:'n'};

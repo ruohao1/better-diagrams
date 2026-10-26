@@ -44,8 +44,8 @@ export async function mountViewer(host:HTMLElement,input:ProjectInput,options:{i
   }
   modal.addEventListener('cancel',event=>{event.preventDefault();void enqueue(async()=>closeModal()).catch(showError);});
   modal.addEventListener('click',event=>{if(event.target!==modal)return;const b=modal.getBoundingClientRect();if(event.clientX<b.left || event.clientX>b.right || event.clientY<b.top || event.clientY>b.bottom)void enqueue(async()=>closeModal()).catch(showError);});
-  const focusState=()=>{const el=document.activeElement;return content.contains(el) && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)?{id:el.id,start:el.selectionStart,end:el.selectionEnd}:undefined;};
-  const restore=(state:ReturnType<typeof focusState>)=>{if(!state?.id)return;const el=document.getElementById(state.id);if(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement){el.focus({preventScroll:true});if(state.start!==null && state.end!==null)el.setSelectionRange(state.start,state.end);}};
+  const focusState=()=>{const el=document.activeElement;return content.contains(el) && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)?{id:el.id,start:el instanceof HTMLSelectElement?null:el.selectionStart,end:el instanceof HTMLSelectElement?null:el.selectionEnd}:undefined;};
+  const restore=(state:ReturnType<typeof focusState>)=>{if(!state?.id)return;const el=document.getElementById(state.id);if(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement){el.focus({preventScroll:true});if(!(el instanceof HTMLSelectElement) && state.start!==null && state.end!==null)el.setSelectionRange(state.start,state.end);}};
   function defaultDetails(parent:HTMLElement,nodeId:string):void {
     const node=project.document.nodes[nodeId];parent.append(ui('h2','',node.label));
     if(project.document.version===2 && project.document.nodes[nodeId].summary)parent.append(ui('p','bd-summary',project.document.nodes[nodeId].summary));

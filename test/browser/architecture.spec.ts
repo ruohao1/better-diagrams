@@ -52,6 +52,13 @@ test('keeps summary overflow inside fixed presets and omits disabled legends',as
   expect(result.summaries.every(s=>s.endsWith('…'))).toBe(true);expect(result.unchanged).toBe(true);expect(result.empty.width).toBeGreaterThan(0);
 });
 
+test('keeps a boundary heading inside its box after the last member is removed',async({page})=>{
+  const input=await readProject('examples/architecture-small');if(input.document.version!==2)throw new Error('Expected typed source');const source=input.document.views.small;if(source.type!=='architecture')throw new Error('Expected architecture');
+  source.nodeIds=source.nodeIds.filter(id=>id!=='orders');source.edges=source.edges.filter(e=>e.source!=='orders'&&e.target!=='orders');source.groups!.find(g=>g.id==='application')!.nodeIds=[];
+  const result=await page.evaluate(async input=>{const view=await DiagramCompiler.compileView(input,'small',document.getElementById('stage')!);document.getElementById('stage')!.append(view.svg);const group=view.svg.querySelector('[data-group-id="application"]')!,box=group.querySelector('.group-body')!.getBoundingClientRect(),text=group.querySelector('.group-label')!.getBoundingClientRect();return {inside:box.width>0 && box.height>0 && text.left>=box.left && text.right<=box.right+.1 && text.top>=box.top && text.bottom<=box.bottom+.1,box:box.toJSON(),text:text.toJSON()};},input);
+  expect(result.inside,JSON.stringify(result)).toBe(true);
+});
+
 test('rejects overflowing titles and custom geometry instead of shrinking text',async({page})=>{
   const input=await readProject('examples/architecture-small');
   const errors=await page.evaluate(async input=>{
