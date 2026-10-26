@@ -1,0 +1,13 @@
+{
+  "nodes": [
+    {"id":"orders","x":822,"y":1322,"width":252,"height":136,"groupId":"core"},
+    {"id":"bus","x":650,"y":706,"width":252,"height":136,"groupId":"background"}
+  ],
+  "groups": [
+    {"id":"platform","x":300,"y":600,"width":1200,"height":1200,"header":{"x":320,"y":612,"width":180,"height":20}},
+    {"id":"core","parentId":"platform","x":790,"y":1270,"width":320,"height":230,"header":{"x":810,"y":1282,"width":100,"height":20}},
+    {"id":"background","parentId":"platform","x":340,"y":650,"width":920,"height":520,"header":{"x":360,"y":662,"width":200,"height":20}},
+    {"id":"workers","parentId":"background","x":394,"y":911,"width":836,"height":224,"header":{"x":414,"y":923,"width":100,"height":20}}
+  ],
+  "edges": [{"id":"orders-bus","source":"orders","target":"bus","kind":"event","paths":[[{"x":1032,"y":1458},{"x":1032,"y":1468},{"x":1146,"y":1468},{"x":1146,"y":1723},{"x":1421,"y":1723},{"x":1421,"y":643},{"x":734,"y":643},{"x":734,"y":706}]],"labels":[{"x":1429,"y":1510,"width":100,"height":32,"text":"Order accepted","lines":["Order accepted"]}]}]
+}

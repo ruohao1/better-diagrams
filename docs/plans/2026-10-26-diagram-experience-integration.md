@@ -219,7 +219,7 @@ Invoke the authoring-controls hook in the root and active modal frames. The edit
 
 **Interfaces:** Produces the pure scene types, `assessRoutes`, `compareRoutes`, and `shortenRoutes` above. No browser globals, ELK instance, fixtures' node names, or mutable global cache in the router.
 
-- [ ] **Step 1: Write failing native geometry tests.** Capture the reported dense route as a post-layout test scene, not authored diagram coordinates: source rectangle `(822,1322,252,136)`, target `(650,706,252,136)`, blocking worker boundary `(394,911,836,224)`, and original points `(1032,1458) → (1032,1468) → (1146,1468) → (1146,1723) → (1421,1723) → (1421,643) → (734,643) → (734,706)`. Include group ancestry, heading rectangles, labels, and other segments needed for clearance checks. Assert:
+- [x] **Step 1: Write failing native geometry tests.** Capture the reported dense route as a post-layout test scene, not authored diagram coordinates: source rectangle `(822,1322,252,136)`, target `(650,706,252,136)`, blocking worker boundary `(394,911,836,224)`, and original points `(1032,1458) → (1032,1468) → (1146,1468) → (1146,1723) → (1421,1723) → (1421,643) → (734,643) → (734,706)`. Include group ancestry, heading rectangles, labels, and other segments needed for clearance checks. Assert:
   ```ts
   const before: LayoutScene = JSON.parse(readFileSync('test/fixtures/routing/dense-feedback.json', 'utf8'));
   const originalSnapshot = structuredClone(before);
@@ -233,10 +233,10 @@ Invoke the authoring-controls hook in the root and active modal frames. The edit
   assert.deepEqual(before, originalSnapshot);
   ```
   Also cover an entirely blocked shortcut, label with no clear placement, ancestor versus unrelated boundaries, unequal/parallel edges, shared endpoint contact, collinear hiding, zero-length segments, self-loops, and multiple sections. Verify the declared lexicographic comparison order.
-- [ ] **Step 2: Run** `node --test test/routing.test.ts`. Expected: FAIL because the production geometry/router modules do not exist.
-- [ ] **Step 3: Implement** the pure functions. Preserve original routes if no safe shorter alternative exists. Reposition the affected label using its measured dimensions; do not cross a heading or hide a connection to save length. Keep loops and complicated obstacle search out of this bounded pass.
-- [ ] **Step 4: Run** `npm run check && node --test test/routing.test.ts`. Expected: PASS; the captured route is under 1,500 units with at most two turns and no forbidden obstacle hits.
-- [ ] **Step 5: Commit** as `feat: simplify architecture routes with obstacle checks`.
+- [x] **Step 2: Run** `node --test test/routing.test.ts`. Expected: FAIL because the production geometry/router modules do not exist.
+- [x] **Step 3: Implement** the pure functions. Preserve original routes if no safe shorter alternative exists. Reposition the affected label using its measured dimensions; do not cross a heading or hide a connection to save length. Keep loops and complicated obstacle search out of this bounded pass.
+- [x] **Step 4: Run** `npm run check && node --test test/routing.test.ts`. Expected: PASS; the captured route is under 1,500 units with at most two turns and no forbidden obstacle hits.
+- [x] **Step 5: Commit** as `feat: simplify architecture routes with obstacle checks`.
 
 ### Task 4: Compile fixed-size architecture scenes and legends
 
