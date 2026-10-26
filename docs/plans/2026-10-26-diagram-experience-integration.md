@@ -265,17 +265,17 @@ Invoke the authoring-controls hook in the root and active modal frames. The edit
 
 **Interfaces:** Consumes Task 4 measurement/layout interfaces and Task 1 flowchart roles/main-path edge IDs. Produces flowchart `prepareNode`/`layoutCandidates` behavior through the existing compiler API.
 
-- [ ] **Step 1: Write failing flowchart tests.** Cover rectangles/diamonds/terminals with their declared dimensions, downward default and rightward override, labels on branches/errors/retries/jumps, unlabeled ordinary steps, a retry loop, multiple outcomes, a disconnected fragment, and an empty view. Ensure text fits the actual diamond/pill interior, not merely its bounding rectangle. Require clear errors for oversized titles. Assert a straight main path and unchanged authored ordering:
+- [x] **Step 1: Write failing flowchart tests.** Cover rectangles/diamonds/terminals with their declared dimensions, downward default and rightward override, labels on branches/errors/retries/jumps, unlabeled ordinary steps, a retry loop, multiple outcomes, a disconnected fragment, and an empty view. Ensure text fits the actual diamond/pill interior, not merely its bounding rectangle. Require clear errors for oversized titles. Assert a straight main path and unchanged authored ordering:
   ```ts
   expect(mainPathCenterSpread).toBeLessThanOrEqual(1);
   expect(retryCrossesNodeOrLabel).toBe(false);
   expect(source.mainPath).toEqual(originalMainPath);
   expect(normalNextLabels).toEqual([]);
   ```
-- [ ] **Step 2: Run** `npm run build && npx --no-install playwright test test/browser/flowchart.spec.ts --project=chromium`. Expected: FAIL on missing flowchart renderer support.
-- [ ] **Step 3: Implement** fixed shape preparation and generated cardinal ports. Use the declared main-path edges for straightness/direction preferences, try branch sides, and retain explicit retries around the main flow. Apply measured labels and the same SVG bounds/legend rules. Do not infer a main path or reuse the rectangular architecture shortcut pass on diamonds.
-- [ ] **Step 4: Run** Step 2 and the architecture/layout specs plus `npm run check`. Expected: PASS, including the prototype's branching/retry case without crossings or node/label overlaps. Visually inspect both directions.
-- [ ] **Step 5: Commit** as `feat: compile flowcharts with authored main paths`.
+- [x] **Step 2: Run** `npm run build && npx --no-install playwright test test/browser/flowchart.spec.ts --project=chromium`. Expected: FAIL on missing flowchart renderer support.
+- [x] **Step 3: Implement** fixed shape preparation and generated cardinal ports. Use the declared main-path edges for straightness/direction preferences, try branch sides, and retain explicit retries around the main flow. Apply measured labels and the same SVG bounds/legend rules. Do not infer a main path or reuse the rectangular architecture shortcut pass on diamonds.
+- [x] **Step 4: Run** Step 2 and the architecture/layout specs plus `npm run check`. Expected: PASS, including the prototype's branching/retry case without crossings or node/label overlaps. Visually inspect both directions.
+- [x] **Step 5: Commit** as `feat: compile flowcharts with authored main paths`.
 
 ### Task 6: Integrate diagram-only viewing, canvas gestures, and modal history
 

@@ -3,6 +3,8 @@
 .node-body { fill: #fff; stroke: #aebccc; stroke-width: 1.5; }
 .node-label { fill: #172b46; font-size: 15px; font-weight: 600; }
 .node-summary { fill: #627286; font-size: 12.5px; }
+[data-step-kind="decision"] .node-body { fill: #fcf8ef; stroke: #c8b792; }
+[data-step-kind="end"] .node-body { fill: #f1f7f3; }
 .group-body { fill: #edf1f6; stroke: #d6dee8; stroke-width: 1; }
 .group-label { fill: #7d8ba0; font-size: 11px; font-weight: 600; letter-spacing: .4px; }
 .edge-path { fill: none; stroke-width: 1.5; stroke-linejoin: round; }

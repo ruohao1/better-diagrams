@@ -34,6 +34,7 @@ function within(box:Rect,width:number,height:number):boolean {
 }
 
 export async function prepareNode(input:ProjectInput,doc:RenderDocument,viewId:string,nodeId:string,scope:string,stage:SVGElement):Promise<{svg:SVGSVGElement;bounds:Rect;size:Size}> {
+  if(doc.views[viewId].type==='flowchart')return prepareFlowNode(doc,viewId,nodeId,stage);
   const node=doc.nodes[nodeId],view=doc.views[viewId],name=node.template??'default',custom=Object.hasOwn(input.templates,name);
   if(!custom && name!=='default')throw new Error('Unknown template: '+name);
   const presets={compact:{width:224,height:128},standard:{width:252,height:136},large:{width:288,height:152}};
@@ -54,7 +55,6 @@ export async function prepareNode(input:ProjectInput,doc:RenderDocument,viewId:s
       if(!Number.isFinite(box.width+box.height)||box.width<=0||box.height<=0)fail('SVG template has no visible geometry');
       return {svg,bounds:box,size:{width:box.width+16,height:box.height+16}};
     }
-    if(view.type!=='architecture')fail('Flowchart rendering is not yet available');
     if(custom){
       svg.getBBox();await document.fonts.ready;
       const box=svg.getBBox(),vb=svg.viewBox.baseVal;
@@ -100,6 +100,38 @@ export async function prepareNode(input:ProjectInput,doc:RenderDocument,viewId:s
       mark.append(element('rect',{x,y:16,width:17,height:17,rx:5,fill:'#fff',stroke:'#c7d4e5'}),element('path',{d:`M${x+5} 28l7-7m-6 0h6v6`,fill:'none',stroke:'#6883aa','stroke-width':1.3}));svg.append(mark);
     }
     if(!within(svg.getBBox(),size.width,size.height))fail('Node text or geometry exceeds the selected preset');
+    return {svg,bounds:{x:0,y:0,...size},size};
+  } finally {svg.remove();}
+}
+
+async function prepareFlowNode(doc:RenderDocument,viewId:string,nodeId:string,stage:SVGElement):Promise<{svg:SVGSVGElement;bounds:Rect;size:Size}> {
+  const node=doc.nodes[nodeId],kind=doc.views[viewId].stepKinds[nodeId],terminal=kind==='start'||kind==='end';
+  const size=kind==='decision'?{width:174,height:108}:terminal?{width:154,height:48}:{width:222,height:84};
+  const {width,height}=size,svg=element('svg',{viewBox:`0 0 ${width} ${height}`,width,height,'data-step-kind':kind});stage.append(svg);
+  const fail=():never=>{throw new Error(nodeId+' ('+kind+'): Title does not fit the step; use a concise title');};
+  try {
+    const body=kind==='decision'?element('polygon',{class:'node-body',points:`${width/2},0 ${width},${height/2} ${width/2},${height} 0,${height/2}`}):element('rect',{class:'node-body',width,height,rx:terminal?height/2:9});
+    if(node.appearance?.background)body.style.fill=node.appearance.background;
+    if(node.appearance?.border)body.style.stroke=node.appearance.border;
+    svg.append(body);
+    const text=element('text',{class:'node-label','text-anchor':'middle'});svg.append(text);
+    const metrics=await textMetrics(text),lines=wrapText(text,node.label,kind==='decision'?width*.6:width-(node.childViewId?60:32));
+    const textHeight=metrics.height+(lines.length-1)*metrics.lineHeight;
+    if(lines.length>2 || textHeight>height-20)fail();
+    textLines(text,lines,width/2,(height-textHeight)/2-metrics.top,metrics.lineHeight);
+    for(const line of text.querySelectorAll<SVGTSpanElement>('tspan')){
+      const box=line.getBBox();
+      for(const [x,y] of [[box.x,box.y],[box.x+box.width,box.y],[box.x,box.y+box.height],[box.x+box.width,box.y+box.height]]){
+        if(x<10 || x>width-10 || y<8 || y>height-8)fail();
+        if(kind==='decision' && Math.abs((x-width/2)/(width/2))+Math.abs((y-height/2)/(height/2))>.94)fail();
+        if(terminal){const cx=x<height/2?height/2:x>width-height/2?width-height/2:x;if((x-cx)**2+(y-height/2)**2>(height/2-3)**2)fail();}
+      }
+    }
+    if(node.childViewId){
+      const x=kind==='decision'?width/2-8:width-30,y=kind==='decision'?12:10;
+      const indicator=element('g',{'data-internal-indicator':'','aria-hidden':'true'});
+      indicator.append(element('rect',{x,y,width:16,height:16,rx:5,fill:'#fff',stroke:'#c7d4e5'}),element('path',{d:`M${x+4} ${y+12}l7-7m-6 0h6v6`,fill:'none',stroke:'#6883aa','stroke-width':1.3}));svg.append(indicator);
+    }
     return {svg,bounds:{x:0,y:0,...size},size};
   } finally {svg.remove();}
 }
