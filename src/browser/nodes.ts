@@ -62,10 +62,18 @@ export async function prepareNode(input:ProjectInput,doc:RenderDocument,viewId:s
       svg.getBBox();await document.fonts.ready;
       const box=svg.getBBox(),vb=svg.viewBox.baseVal;
       if(!within(box,vb.width,vb.height) || box.width<=0 || box.height<=0)fail('Custom template geometry or text exceeds its viewBox');
-      const scale=Math.min(size.width/vb.width,size.height/vb.height);
-      for(const text of svg.querySelectorAll('text'))if(parseFloat(getComputedStyle(text).fontSize)*scale<12)fail('Custom template text is smaller than 12 units at the selected preset');
-      svg.setAttribute('width',String(size.width));svg.setAttribute('height',String(size.height));svg.style.overflow='hidden';
+      svg.setAttribute('width',String(size.width));svg.setAttribute('height',String(size.height));svg.setAttribute('preserveAspectRatio','xMidYMid meet');svg.style.overflow='hidden';
       const outer=element('svg',{viewBox:`0 0 ${size.width} ${size.height}`,width:size.width,height:size.height});outer.append(svg);stage.append(outer);svg=outer;
+      const frame=svg.getScreenCTM()?.inverse();
+      for(const text of svg.querySelectorAll<SVGTextElement|SVGTSpanElement>('text,tspan')){
+        if(![...text.childNodes].some(child=>child.nodeType===Node.TEXT_NODE && child.textContent?.trim()))continue;
+        const screen=text.getScreenCTM();
+        if(!frame || !screen)fail('Cannot measure custom template text at the selected preset');
+        const matrix=frame!.multiply(screen!);
+        const widthScale=Math.hypot(matrix.a,matrix.b),heightScale=widthScale?Math.abs(matrix.a*matrix.d-matrix.b*matrix.c)/widthScale:0;
+        const fontSize=parseFloat(getComputedStyle(text).fontSize)*Math.min(widthScale,heightScale);
+        if(!Number.isFinite(fontSize) || fontSize<12)fail('Custom template text is smaller than 12 units at the selected preset');
+      }
     } else {
       svg.append(element('rect',{class:'node-body',width:size.width,height:size.height,rx:11}));
     }

@@ -159,12 +159,12 @@ export function parseDocument(value: unknown): DiagramDocument {
     text(view.detailLevel, viewId + '.detailLevel', true);
     const selected = new Set(members(view.nodeIds, nodeIds, viewId));
     if (typed && view.legend !== undefined) requireValue(typeof view.legend === 'boolean', viewId + '.legend', 'expected boolean');
-    if (typed && !flow && view.nodeSize !== undefined) requireValue(['compact','standard','large'].includes(String(view.nodeSize)), viewId + '.nodeSize', 'unknown node size');
+    if (typed && !flow && view.nodeSize !== undefined) requireValue(typeof view.nodeSize === 'string' && ['compact','standard','large'].includes(view.nodeSize), viewId + '.nodeSize', 'unknown node size');
     let roles: Record<string, unknown> = {};
     if (flow) {
       roles = object(view.stepKinds, viewId + '.stepKinds');
       requireValue(Object.keys(roles).length === selected.size && Object.keys(roles).every(key => selected.has(key)), viewId, 'step kinds must match view membership');
-      for (const role of Object.values(roles)) requireValue(['action','decision','start','end'].includes(String(role)), viewId, 'unknown step kind');
+      for (const role of Object.values(roles)) requireValue(typeof role === 'string' && ['action','decision','start','end'].includes(role), viewId, 'unknown step kind');
       if (view.direction !== undefined) requireValue(view.direction === 'down' || view.direction === 'right', viewId, 'unknown direction');
     }
     const edgeIds = new Set<string>();
@@ -176,7 +176,7 @@ export function parseDocument(value: unknown): DiagramDocument {
       requireValue(selected.has(edge.source) && selected.has(edge.target), viewId, 'missing edge endpoint');
       if (edge.label !== undefined) text(edge.label, 'edge.label');
       if (typed) {
-        requireValue((flow ? ['next','branch','error','retry','jump'] : ['call','data','event','telemetry','dependency']).includes(String(edge.kind)), viewId, 'unknown connection kind');
+        requireValue(typeof edge.kind === 'string' && (flow ? ['next','branch','error','retry','jump'] : ['call','data','event','telemetry','dependency']).includes(edge.kind), viewId, 'unknown connection kind');
         if (flow && edge.kind === 'next') {
           requireValue(edge.label === undefined, viewId, 'next connections must be unlabeled');
           requireValue(roles[edge.source] !== 'decision', viewId, 'decision connections require labeled outcomes');

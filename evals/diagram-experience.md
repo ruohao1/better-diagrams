@@ -74,9 +74,11 @@ The offline page issued zero HTTP(S) requests and raised zero page errors. The l
 
 ## Regression checks and limits
 
-A clean offline dependency install, type check, build, 33 native tests, and 37 Chromium tests passed. Coverage includes v1 preservation, v2 validation, asset containment/watchers, actual SVG geometry, the reported two-turn dense route, fallback routing, fixed text, nested/empty boundaries, flow directions, modal history/focus, text dragging, touch controls, source/save races, raw draft recovery, local SVG identifiers, real embedded fonts, and offline installed-package examples.
+A clean offline dependency install, type check, build, 34 native tests, and 38 Chromium tests passed. Coverage includes v1 preservation, v2 validation, asset containment/watchers, actual SVG geometry, the reported two-turn dense route, fallback routing, fixed text, nested/empty boundaries, flow directions, modal history/focus, text dragging, touch controls, source/save races, raw draft recovery, local SVG identifiers, real embedded fonts, and offline installed-package examples.
 
 The post-save race test injects a newer source snapshot after the save reply while its preview is still rendering. It failed when that snapshot was discarded and passed after deferred events were drained before write controls resumed. Server shutdown also has a failing-then-passing regression for incomplete HTTP headers.
+
+A fresh whole-branch review found two important issues. Enum validation coerced arrays into strings, and custom SVG text could bypass the minimum size through transforms or nested spans. Both have failing-then-passing regressions. Validation now requires actual strings. Custom templates fit uniformly, and each text run is measured in the fixed node frame. Coverage includes root/group transforms, nonuniform scaling, and span overrides. Legacy template sizing remains unchanged.
 
 The small, dense, flowchart, desktop viewer, and touch captures were inspected. The dense routing check counts no forbidden overlaps in the compiled fixture; it does not establish a global optimum. Complex architecture routes retain their ELK fallback.
 

@@ -90,6 +90,29 @@ test('retains logos, appearance, and the internal-view indicator on fixed custom
   expect(result.logo).toBe(true);expect(result.indicator).toBe(true);expect(result.fill).toBe('rgb(231, 246, 239)');
 });
 
+test('checks transformed text runs and span overrides after fitting custom templates',async({page})=>{
+  const input=await readProject('examples/architecture-small');input.document.nodes.orders.template='card';
+  const result=await page.evaluate(async input=>{
+    const host=document.getElementById('stage')!,errors:string[]=[];
+    for(const [transform,content] of [
+      ['', '<g transform="scale(0.1)"><text x="62" y="36" data-field="label"/></g>'],
+      ['', '<g transform="scale(0.1 1)"><text x="62" y="36" data-field="label"/></g>'],
+      ['', '<text x="62" y="36"><tspan font-size="1" data-field="label"/></text>'],
+      ['scale(0.1)', '<text x="62" y="36" data-field="label"/>'],
+    ]){
+      input.templates.card='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 136" transform="'+transform+'"><rect class="node-body" width="252" height="136"/>'+content+'</svg>';
+      try{await DiagramCompiler.compileView(input,'small',host);errors.push('accepted');}catch(error){errors.push(String(error));}
+    }
+    input.templates.card='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 252 136"><rect class="node-body" width="252" height="136"/><text x="62" y="36" font-size="1"><tspan font-size="15" data-field="label"/></text></svg>';
+    let overridden='';try{const view=await DiagramCompiler.compileView(input,'small',host);overridden=view.svg.querySelector('[data-node-id="orders"] [data-field="label"]')!.textContent!;}catch(error){overridden=String(error);}
+    input.templates.card='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 100" preserveAspectRatio="none"><rect class="node-body" width="300" height="100"/><text x="62" y="36" font-size="18" data-field="label"/></svg>';
+    const fitted=await DiagramCompiler.compileView(input,'small',host);host.append(fitted.svg);const body=fitted.svg.querySelector('[data-node-id="orders"] .node-body')!.getBoundingClientRect();
+    return {errors,overridden,ratio:body.width/body.height};
+  },input);
+  for(const error of result.errors){expect(error).not.toBe('accepted');expect(error).toMatch(/orders.*12/);}
+  expect(result.overridden).toBe('Order service');expect(result.ratio).toBeCloseTo(3,2);
+});
+
 test('shortens the dense connection and exports all measured content',async({page},info)=>{
   const input=await readProject('examples/architecture-dense');
   const result=await page.evaluate(async input=>{

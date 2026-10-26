@@ -127,3 +127,15 @@ test('rejects invalid typed sources at the source boundary', () => {
   const valid=architecture();valid.nodes.orders.appearance={background:'#abc',border:'#12345678'};
   assert.doesNotThrow(()=>parseDocument(valid));
 });
+
+test('rejects non-string enum values without coercing source arrays',()=>{
+  for(const [family,mutate] of [
+    ['architecture',(d:any)=>{d.views.small.type=['architecture'];}],
+    ['architecture',(d:any)=>{d.views.small.nodeSize=['standard'];}],
+    ['architecture',(d:any)=>{d.views.small.edges[0].kind=['call'];}],
+    ['flowchart',(d:any)=>{d.views.flow.stepKinds.stock=['decision'];}],
+    ['flowchart',(d:any)=>{d.views.flow.edges[0].kind=['next'];}],
+    ['flowchart',(d:any)=>{d.views.flow.direction=['down'];}],
+    ['flowchart',(d:any)=>{d.views.flow.stepKinds.stock=['decision'];d.views.flow.edges[1].kind='next';delete d.views.flow.edges[1].label;}],
+  ] as [string,(d:any)=>void][]){const source=family==='architecture'?architecture():flowchart();mutate(source);assert.throws(()=>parseDocument(source));}
+});
