@@ -13,7 +13,7 @@ test('guards typed graph mutations until typed authoring is available',async({pa
   const document=JSON.parse(await readFile('examples/architecture-small/diagram.json','utf8'));
   await page.setContent('<main id="app"></main>');await page.addScriptTag({path:'dist/test/editor.js'});
   await page.evaluate(async document=>{
-    await DiagramEditor.mountEditor(window.document.getElementById('app')!,{document,themeCss:'',templates:{},revision:'test',documentRevision:'test',sequence:1},{subscribe:()=>()=>{},save:async()=>{throw new Error('Unexpected save');}});
+    await DiagramEditor.mountEditor(window.document.getElementById('app')!,{document,themeCss:'',templates:{},logos:{},revision:'test',documentRevision:'test',sequence:1},{subscribe:()=>()=>{},save:async()=>{throw new Error('Unexpected save');}});
   },document);
   await expect(page.getByRole('button',{name:'Add node',exact:true})).toBeDisabled();
   await expect(page.getByRole('button',{name:'Add connection',exact:true})).toBeDisabled();

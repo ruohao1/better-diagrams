@@ -19,7 +19,8 @@
       "label": "Order service",
       "summary": "Validates requests, stores orders, and publishes events.",
       "details": "Validates requests, stores orders, and publishes events. This is illustrative example data, not a claim extracted from a repository.",
-      "childViewId": "orders"
+      "childViewId": "orders",
+      "logo": "service"
     },
     "database": {
       "label": "Order database",

@@ -4,7 +4,7 @@ import type { ProjectInput } from '../../src/model.ts';
 
 declare global { var DiagramCompiler: typeof import('../../src/browser/compiler.ts'); }
 const fixture = JSON.parse(readFileSync('examples/skill-install/diagram.json', 'utf8'));
-const input: ProjectInput = { document: fixture, themeCss: '', templates: {} };
+const input: ProjectInput = { document: fixture, themeCss: '', templates: {}, logos:{} };
 
 test.beforeEach(async ({ page }) => {
   await page.setContent('<main id="stage" style="width:1400px;height:850px"></main>');
@@ -72,7 +72,7 @@ test('reserves actual geometry for Unicode, themed edge labels and group heading
       ['theme','A very wide connection','.edge-label{font-size:36px}',''],
       ['group','calls','.group-label{font-size:36px}','A long group heading — 日本語 '.repeat(8)],
     ]){
-      const input={document:{version:1 as const,title:'Measured labels',purpose:'Keep text clear of nodes.',audience:'Maintainers',rootViewId:'overview',nodes:{a:{label:'Source',details:''},b:{label:'Destination',details:''}},views:{overview:{title:'Overview',detailLevel:'Components',nodeIds:['a','b'],edges:[{id:'call',source:'a',target:'b',label}],groups:groupLabel?[{id:'group',label:groupLabel,nodeIds:['a']}]:[]}}},themeCss,templates:{}};
+      const input={document:{version:1 as const,title:'Measured labels',purpose:'Keep text clear of nodes.',audience:'Maintainers',rootViewId:'overview',nodes:{a:{label:'Source',details:''},b:{label:'Destination',details:''}},views:{overview:{title:'Overview',detailLevel:'Components',nodeIds:['a','b'],edges:[{id:'call',source:'a',target:'b',label}],groups:groupLabel?[{id:'group',label:groupLabel,nodeIds:['a']}]:[]}}},themeCss,templates:{},logos:{}};
       const view=await DiagramCompiler.compileView(input,'overview',host);host.replaceChildren(view.svg);
       const edge=view.svg.querySelector<SVGTextElement>('.edge-label')!.getBoundingClientRect();
       for(const node of view.svg.querySelectorAll<SVGRectElement>('.node-body')){

@@ -53,26 +53,26 @@ export async function saveDocument(root:string,document:DiagramDocument,expected
 
 export function watchProject(root:string,onChange:(error?:Error)=>void):()=>void {
   let timer:ReturnType<typeof setTimeout>|undefined;
-  let templates:FSWatcher|undefined;
+  const assets=new Map<string,FSWatcher>();
   const changed=()=>{clearTimeout(timer);timer=setTimeout(()=>onChange(),40);};
-  const attachTemplates=()=>{
-    templates?.close();templates=undefined;
+  const attachAssets=(directory:string)=>{
+    assets.get(directory)?.close();assets.delete(directory);
     try {
-      const path=resolve(root,'templates');
-      if(lstatSync(path).isSymbolicLink())throw new Error('Refusing to watch a template-directory symlink');
-      templates=watch(path,(_event,name)=>{if(!name || /^[A-Za-z][A-Za-z0-9_-]*\.svg$/.test(name.toString()))changed();});
-      templates.on('error',error=>onChange(error));
+      const path=resolve(root,directory);
+      if(lstatSync(path).isSymbolicLink())throw new Error('Refusing to watch an asset-directory symlink');
+      const watcher=watch(path,(_event,name)=>{if(!name || /^[A-Za-z][A-Za-z0-9_-]*\.svg$/.test(name.toString()))changed();});
+      watcher.on('error',error=>onChange(error));assets.set(directory,watcher);
     } catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')onChange(error as Error);}
   };
   // Watch directories: recursive file handles can follow the old inode after an editor's atomic save.
   const watcher=watch(root,(_event,filename)=>{
     const name=filename?.toString().replaceAll('\\','/');
-    if(!name || name==='templates')attachTemplates();
-    if(!name || ['diagram.json','theme.css','templates'].includes(name))changed();
+    for(const directory of ['templates','logos'])if(!name || name===directory)attachAssets(directory);
+    if(!name || ['diagram.json','theme.css','templates','logos'].includes(name))changed();
   });
-  attachTemplates();
+  for(const directory of ['templates','logos'])attachAssets(directory);
   watcher.on('error',error=>onChange(error));
-  return ()=>{clearTimeout(timer);watcher.close();templates?.close();};
+  return ()=>{clearTimeout(timer);watcher.close();for(const asset of assets.values())asset.close();};
 }
 
 export async function readProject(root: string): Promise<ProjectSnapshot> {
@@ -86,14 +86,23 @@ export async function readProject(root: string): Promise<ProjectSnapshot> {
   const document=parseDocument(JSON.parse(source.text));
   let themeCss='';
   try {themeCss=(await read('theme.css')).text;} catch(error) {if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
-  const templates:Record<string,string>=Object.create(null);
-  let names:string[]=[];
-  try { names=await readdir(await containedPath(root,'templates')); } catch(error) {if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
-  for (const name of names.sort()) {
-    if(!name.endsWith('.svg'))continue;
-    const id=name.slice(0,-4);
-    if(!/^[A-Za-z][A-Za-z0-9_-]*$/.test(id))throw new Error('Invalid template filename: '+name);
-    templates[id]=(await read('templates/'+name)).text;
+  const load=async(directory:string):Promise<Record<string,string>>=>{
+    const result:Record<string,string>=Object.create(null);
+    let names:string[]=[];
+    try {names=await readdir(await containedPath(root,directory));}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
+    for(const name of names.sort()){
+      if(!name.endsWith('.svg'))continue;
+      const id=name.slice(0,-4);
+      if(!/^[A-Za-z][A-Za-z0-9_-]*$/.test(id))throw new Error('Invalid asset filename: '+name);
+      result[id]=(await read(directory+'/'+name)).text;
+    }
+    return result;
+  };
+  const templates=await load('templates'),logos=await load('logos');
+  for(const [id,node] of Object.entries(document.nodes)){
+    if(node.template && node.template!=='default' && !Object.hasOwn(templates,node.template))throw new Error('Unknown template: '+node.template);
+    const logo=document.version===2?document.nodes[id].logo:undefined;
+    if(logo && !Object.hasOwn(logos,logo))throw new Error('Unknown logo: '+logo);
   }
-  return {document,themeCss,templates,documentRevision:source.hash,revision:digest(JSON.stringify(files.sort(([a],[b])=>a.localeCompare(b))))};
+  return {document,themeCss,templates,logos,documentRevision:source.hash,revision:digest(JSON.stringify(files.sort(([a],[b])=>a.localeCompare(b))))};
 }

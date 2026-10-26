@@ -15,10 +15,10 @@ export function validateTheme(css:string):void {
   if(/url\s*\(/i.test(clean.replace(/url\s*\([^)]*\)/gi,'')))throw new Error('Invalid stylesheet URL');
 }
 
-export function instantiateNode(template: string, nodeId: string, node: DiagramNode): SVGSVGElement {
+function parseInertSvg(template: string, scope: string): SVGSVGElement {
   if(/<!DOCTYPE|<!ENTITY|<\?xml-stylesheet/i.test(template))throw new Error('Unsafe SVG document directive');
   const doc = new DOMParser().parseFromString(template, 'image/svg+xml');
-  if (doc.querySelector('parsererror') || doc.documentElement.localName !== 'svg') throw new Error('Invalid SVG node template: ' + nodeId);
+  if (doc.querySelector('parsererror') || doc.documentElement.localName !== 'svg') throw new Error('Invalid SVG asset: ' + scope);
   const svg = document.importNode(doc.documentElement, true) as unknown as SVGSVGElement;
   const viewBox=svg.getAttribute('viewBox')?.trim().split(/[\s,]+/).map(Number);
   if(!viewBox || viewBox.length!==4 || !viewBox.every(Number.isFinite) || viewBox[2]<=0 || viewBox[3]<=0)throw new Error('SVG template needs a finite positive viewBox');
@@ -35,7 +35,7 @@ export function instantiateNode(template: string, nodeId: string, node: DiagramN
     const id=el.getAttribute('id');
     if(id){
       if(!/^[A-Za-z][A-Za-z0-9_-]*$/.test(id)||ids.has(id))throw new Error('Invalid or duplicate SVG identifier');
-      ids.set(id,'bd-'+nodeId.length+'-'+nodeId+'-'+id);
+      ids.set(id,scopeId(scope,id));
     }
   }
   const reference=(id:string):string=>{const replacement=ids.get(id);if(!replacement)throw new Error('Missing SVG local reference: '+id);return replacement;};
@@ -52,13 +52,22 @@ export function instantiateNode(template: string, nodeId: string, node: DiagramN
       }
     }
   }
-  for (const slot of svg.querySelectorAll('[data-field]')) {
-    const field = slot.getAttribute('data-field');
-    if(!['text','tspan'].includes(slot.localName) || !field || (field!=='label' && !/^data\.[A-Za-z][A-Za-z0-9_-]*$/.test(field)))throw new Error('Invalid SVG text slot');
-    const key=field.slice(5);
-    slot.textContent = field === 'label' ? node.label : node.data && Object.hasOwn(node.data,key) ? node.data[key] : '';
-  }
   if(viewBox[0]!==0 || viewBox[1]!==0){const group=document.createElementNS(NS,'g');group.setAttribute('transform','translate('+(-viewBox[0])+','+(-viewBox[1])+')');group.append(...svg.childNodes);svg.append(group);}
   svg.setAttribute('viewBox','0 0 '+viewBox[2]+' '+viewBox[3]);svg.setAttribute('width',String(viewBox[2]));svg.setAttribute('height',String(viewBox[3]));svg.style.overflow='visible';
+  return svg;
+}
+
+export function scopeId(...parts:string[]):string {return 'bd-'+parts.map(part=>part.length+'-'+part).join('-');}
+
+export function instantiateLogo(template:string,scope:string):SVGSVGElement {return parseInertSvg(template,scope);}
+
+export function instantiateNode(template: string, scope: string, node: DiagramNode): SVGSVGElement {
+  const svg=parseInertSvg(template,scope);
+  for (const slot of svg.querySelectorAll('[data-field]')) {
+    const field = slot.getAttribute('data-field');
+    if(!['text','tspan'].includes(slot.localName) || !field || (!['label','summary'].includes(field) && !/^data\.[A-Za-z][A-Za-z0-9_-]*$/.test(field)))throw new Error('Invalid SVG text slot');
+    const key=field.slice(5);
+    slot.textContent = field === 'label' ? node.label : field === 'summary' ? ('summary' in node ? node.summary : '') : node.data && Object.hasOwn(node.data,key) ? node.data[key] : '';
+  }
   return svg;
 }

@@ -67,6 +67,7 @@ export type ProjectInput = {
   document: DiagramDocument;
   themeCss: string;
   templates: Record<string, string>;
+  logos: Record<string, string>;
 };
 export type ProjectSnapshot = ProjectInput & { revision: string; documentRevision: string };
 

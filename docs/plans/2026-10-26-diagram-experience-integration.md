@@ -202,16 +202,16 @@ Invoke the authoring-controls hook in the root and active modal frames. The edit
 
 **Interfaces:** Consumes Task 1 raw documents. Produces `ProjectInput.logos`, referenced-asset checks, the summary slot, and scoped `instantiateLogo`/`instantiateNode` functions. Add `dist/test/templates.js` with global `DiagramTemplates` for DOM-level tests.
 
-- [ ] **Step 1: Write failing asset tests.** Assert logo edits change full revision but preserve document revision; missing references and escaping file/directory symlinks fail; logo-directory creation/atomic replacement/deletion produces ordered SSE updates/errors. In real SVG, reject active elements/events/imports/remote resources; accept nonzero positive viewBoxes and namespace local IDs. Mount two copies with overlapping node/local names and assert:
+- [x] **Step 1: Write failing asset tests.** Assert logo edits change full revision but preserve document revision; missing references and escaping file/directory symlinks fail; logo-directory creation/atomic replacement/deletion produces ordered SSE updates/errors. In real SVG, reject active elements/events/imports/remote resources; accept nonzero positive viewBoxes and namespace local IDs. Mount two copies with overlapping node/local names and assert:
   ```ts
   expect(new Set(ids).size).toBe(ids.length);
   expect(remoteRequests).toEqual([]);
   expect(boundSummary).toBe('<untrusted summary>'); // literal text content
   ```
-- [ ] **Step 2: Run** `npm run build && node --test test/project.test.ts test/server.test.ts && npx --no-install playwright test test/browser/assets.spec.ts --project=chromium`. Expected: FAIL on missing logo behavior.
-- [ ] **Step 3: Implement** contained logo loading/hashing and extend the existing directory-watch strategy to `logos/`; retain the 40 ms debounce and atomic-replacement handling. Copy referenced fixture assets into temporary test projects instead of weakening missing-asset validation. Share the inert SVG parser instead of adding a second sanitizer. Keep template/logo/render-instance namespaces distinct, including marker IDs used later.
-- [ ] **Step 4: Run** the Step 2 command plus `npm run check`. Expected: PASS; server origin/token/body boundaries and recovery behavior remain green.
-- [ ] **Step 5: Commit** as `feat: support contained offline SVG logos`.
+- [x] **Step 2: Run** `npm run build && node --test test/project.test.ts test/server.test.ts && npx --no-install playwright test test/browser/assets.spec.ts --project=chromium`. Expected: FAIL on missing logo behavior.
+- [x] **Step 3: Implement** contained logo loading/hashing and extend the existing directory-watch strategy to `logos/`; retain the 40 ms debounce and atomic-replacement handling. Copy referenced fixture assets into temporary test projects instead of weakening missing-asset validation. Share the inert SVG parser instead of adding a second sanitizer. Keep template/logo/render-instance namespaces distinct, including marker IDs used later.
+- [x] **Step 4: Run** the Step 2 command plus `npm run check`. Expected: PASS; server origin/token/body boundaries and recovery behavior remain green.
+- [x] **Step 5: Commit** as `feat: support contained offline SVG logos`.
 
 ### Task 3: Extract tested geometry and route simplification
 

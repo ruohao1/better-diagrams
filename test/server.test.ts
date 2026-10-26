@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, readFile, rename, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rename, rm, mkdir, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readProject } from '../src/project.ts';
@@ -8,7 +8,7 @@ import { startDev } from '../src/server.ts';
 
 test('server streams replacements/errors, saves safely and rejects foreign or oversized writes', async () => {
   const dir=await mkdtemp(join(tmpdir(),'diagram-server-'));
-  const input=await readProject('examples/skill-install');await writeFile(join(dir,'diagram.json'),JSON.stringify(input.document));
+  const input=await readProject('examples/skill-install');await cp('examples/skill-install/templates',join(dir,'templates'),{recursive:true});await writeFile(join(dir,'diagram.json'),JSON.stringify(input.document));
   const server=await startDev(dir,{port:0,editorJs:''});
   const controller=new AbortController();
   try {
@@ -28,6 +28,17 @@ test('server streams replacements/errors, saves safely and rejects foreign or ov
       }throw new Error('SSE timeout');
     }
     await until(data=>data.type==='snapshot','initial');
+    await mkdir(join(dir,'logos'));
+    await writeFile(join(dir,'logos/service.svg'),'<svg viewBox="0 0 16 16"/>');
+    const logoAdded=await until(data=>data.snapshot?.logos?.service,'logo directory creation');
+    assert.equal(logoAdded.snapshot.documentRevision,before.documentRevision);
+    await writeFile(join(dir,'logos/replacement.tmp'),'<svg viewBox="0 0 32 32"/>');
+    await rename(join(dir,'logos/replacement.tmp'),join(dir,'logos/service.svg'));
+    const logoChanged=await until(data=>data.snapshot?.logos?.service?.includes('32'),'atomic logo replacement');
+    assert.ok(logoChanged.snapshot.sequence>logoAdded.snapshot.sequence);
+    await rm(join(dir,'logos/service.svg'));
+    const logoRemoved=await until(data=>data.snapshot?.logos && !data.snapshot.logos.service,'logo deletion');
+    assert.ok(logoRemoved.snapshot.sequence>logoChanged.snapshot.sequence);
     const changed=structuredClone(input.document);changed.title='Changed externally';
     await writeFile(join(dir,'replacement.json'),JSON.stringify(changed));await rename(join(dir,'replacement.json'),join(dir,'diagram.json'));
     const event=await until(data=>data.snapshot?.document.title==='Changed externally','replacement');assert.ok(event.snapshot.sequence>before.sequence);
