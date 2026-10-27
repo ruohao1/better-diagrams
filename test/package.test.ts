@@ -38,7 +38,10 @@ test('packed CLI installs offline outside the checkout and builds a working offl
       ]){
         const project=item.name==='starter'?starter:join(installed,'examples',item.name),checked=run(binary,['check',project]);assert.equal(JSON.parse(checked.stdout).ok,true);
         const artifact=join(dir,item.name+'.html'),built=run(binary,['build',project,'--out',artifact]);assert.equal(JSON.parse(built.stdout).rendering,'not-verified');
-        const page=await context.newPage(),requests:string[]=[],errors:string[]=[];page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});page.on('pageerror',e=>errors.push(String(e)));await page.goto(pathToFileURL(artifact).href);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();
+        const page=await context.newPage(),requests:string[]=[],errors:string[]=[];page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});page.on('pageerror',e=>errors.push(String(e)));await page.goto(pathToFileURL(artifact).href);
+        try{await page.locator('.bd-root-frame .bd-canvas').hover();}
+        catch(error){const body=await page.locator('body').innerText({timeout:2000}).catch(()=>'<unavailable>');throw new Error('Packaged '+item.name+' startup failed: '+JSON.stringify({browser:browser.version(),errors,body:body.slice(0,2000)}),{cause:error});}
+        await page.getByRole('button',{name:'Fit',exact:true}).click();
         if(item.fixed)assert.equal(await page.locator('[data-node-id] .node-body').first().getAttribute('width'),'252','The packaged starter must use fixed architecture cards');
         if(item.name==='architecture-small')assert.equal(await page.locator('[data-logo]').count(),1);
         await page.getByRole('button',{name:item.node,exact:true}).click();assert.equal(await page.getByRole('dialog').getByRole('heading',{name:item.node,exact:true}).isVisible(),true);
