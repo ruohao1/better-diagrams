@@ -11,7 +11,7 @@ import { parseDocument } from '../src/model.ts';
 
 test('plugin identity matches the package and its skill example is valid',async()=>{
   const plugin=JSON.parse(await readFile('plugin.json','utf8')),pkg=JSON.parse(await readFile('package.json','utf8'));
-  assert.equal(plugin.name,pkg.name);assert.equal(plugin.version,pkg.version);
+  assert.equal(plugin.name,pkg.name.split('/').at(-1));assert.equal(plugin.version,pkg.version);
   const skill=await readFile('skills/diagram-authoring/SKILL.md','utf8');assert.match(skill,/^---\nname: diagram-authoring\n/);
   parseDocument(JSON.parse(await readFile('skills/diagram-authoring/assets/minimal-diagram.json','utf8')));
 });
@@ -22,10 +22,10 @@ test('packed CLI installs offline outside the checkout and builds a working offl
   try {
     const packed=run('npm',['pack','--json','--pack-destination',dir],process.cwd());
     const meta=JSON.parse(packed.stdout)[0];const files:string[]=meta.files.map((file:{path:string})=>file.path);
-    for(const path of ['dist/cli.mjs','dist/viewer.js','dist/editor.js','plugin.json','skills/diagram-authoring/SKILL.md'])assert.ok(files.includes(path),path);
-    assert.ok(!files.some(path=>path.startsWith('dist/test/')||path.startsWith('docs/')||path.startsWith('node_modules/')||path.includes('.prototype.')));
+    for(const path of ['dist/cli.mjs','dist/viewer.js','dist/editor.js','dist/licenses/elkjs-LICENSE.md','dist/licenses/semver-LICENSE','plugin.json','CHANGELOG.md','skills/diagram-authoring/SKILL.md'])assert.ok(files.includes(path),path);
+    assert.ok(!files.some(path=>path.startsWith('dist/test/')||path.startsWith('docs/')||path.startsWith('src/')||path.startsWith('test/')||path.startsWith('node_modules/')||path.includes('.prototype.')));
     const prefix=join(dir,'prefix');run('npm',['install','--global','--prefix',prefix,'--ignore-scripts','--offline',join(dir,meta.filename)]);
-    const binary=join(prefix,'bin/better-diagrams'),installed=join(prefix,'lib/node_modules/better-diagrams'),starter=join(dir,'starter');await mkdir(starter);await copyFile(join(installed,'skills/diagram-authoring/assets/minimal-diagram.json'),join(starter,'diagram.json'));
+    const binary=join(prefix,'bin/better-diagrams'),installed=join(prefix,'lib/node_modules/@isqrd/better-diagrams'),starter=join(dir,'starter');await mkdir(starter);await copyFile(join(installed,'skills/diagram-authoring/assets/minimal-diagram.json'),join(starter,'diagram.json'));
     const browser=await chromium.launch({headless:true,executablePath:existsSync('/usr/bin/google-chrome')?'/usr/bin/google-chrome':undefined,args:['--no-sandbox']});
     try {
       const context=await browser.newContext({offline:true});

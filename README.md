@@ -2,6 +2,8 @@
 
 A local diagram compiler, browser editor, and coding-agent skill. Author architecture diagrams and flowcharts with a stated purpose, audience, and detail level. The compiler places fixed-size nodes and routes typed connections with ELK.
 
+See the [changelog](CHANGELOG.md) for the current unreleased changes.
+
 Built HTML shows the diagram and an optional legend. Click a node for details and source references. Choose **Explore internals** for a deeper authored view. Both open in one modal with Back navigation. Hover or focus the diagram for zoom/export controls. Large views start at readable scale; drag to pan or choose **Fit**. SVG export contains the complete active diagram and optional legend, excluding controls, modal frames, details, and other views.
 
 ## Try it
@@ -59,11 +61,11 @@ Build and pack a local release, then install its CLI:
 ```sh
 npm run build
 npm pack --pack-destination /tmp
-npm install --global /tmp/better-diagrams-0.1.0.tgz
+npm install --global /tmp/isqrd-better-diagrams-0.1.0.tgz
 better-diagrams --help
 ```
 
-The package is private and has not been published. These commands install this checkout's tarball.
+The npm package name is `@isqrd/better-diagrams`. These commands install this checkout's tarball. After the first public release, install it with `npm install --global @isqrd/better-diagrams`. The executable remains `better-diagrams`. See [release preparation](docs/releasing.md) for the publication workflow.
 
 Copy the skill into a target project's Codex skill directory:
 

@@ -1,5 +1,10 @@
 import { build } from 'esbuild';
 import { existsSync } from 'node:fs';
+import {mkdir,copyFile} from 'node:fs/promises';
+
+await mkdir('dist/licenses',{recursive:true});
+await copyFile('node_modules/elkjs/LICENSE.md','dist/licenses/elkjs-LICENSE.md');
+await copyFile('node_modules/semver/LICENSE','dist/licenses/semver-LICENSE');
 
 const common = { bundle: true, sourcemap: false, legalComments: 'inline', loader: { '.svg': 'text', '.css': 'text' } };
 await build({ ...common, entryPoints: ['src/browser/compiler.ts'], outfile: 'dist/test/compiler.js', format: 'iife', globalName: 'DiagramCompiler', platform: 'browser' });

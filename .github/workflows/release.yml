@@ -1,0 +1,48 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm install --global npm@12.2.1
+      - run: npm ci
+      - run: npx --no-install playwright install --with-deps chromium
+      - run: npm run check
+      - run: npm run build
+      - run: npm run test:unit
+      - run: npm run test:browser
+      - name: Prepare release notes and repository metadata
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          node scripts/release.mjs notes "$RELEASE_TAG" > dist/release-notes.md
+          npm pkg set repository.type=git repository.url="git+https://github.com/${GITHUB_REPOSITORY}.git"
+      - run: npm pack --json --pack-destination dist > dist/package.json
+      - name: Publish the verified tarball to npm
+        run: node scripts/release.mjs publish dist/package.json
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" dist/*.tgz --clobber
+          else
+            gh release create "$RELEASE_TAG" dist/*.tgz --verify-tag --title "$RELEASE_TAG" --notes-file dist/release-notes.md
+          fi
