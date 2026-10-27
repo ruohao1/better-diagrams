@@ -190,7 +190,7 @@ test.describe('typed modal graph editing',()=>{
     let release!:()=>void;const blocked=new Promise<void>(resolve=>{release=resolve;});await page.route('**/api/document',async route=>{await blocked;await route.continue();});
     try {
       await modal.getByLabel('Label',{exact:true}).fill('Reserve stock');await modal.getByLabel('Summary',{exact:true}).fill('Hold stock for this order.');await modal.getByRole('button',{name:'Save changes',exact:true}).click();await expect(modal.getByRole('status')).toHaveText('Saving…');
-      await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Add node',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Order received',exact:true}).click();
+      await page.keyboard.press('Escape');await expect(page.getByRole('button',{name:'Add node',exact:true})).toBeDisabled();await page.getByRole('button',{name:'Received',exact:true}).click();
       await expect(modal.getByLabel('Summary',{exact:true})).toBeDisabled();await expect(modal.getByLabel('Step kind',{exact:true})).toBeDisabled();await expect(modal.getByRole('button',{name:'Remove from view',exact:true})).toBeDisabled();
       release();await expect(modal.getByRole('status')).toHaveText('Saved');await expect(modal.getByLabel('Summary',{exact:true})).toBeEnabled();expect((await readProject(session.dir)).document.nodes.reserve.label).toBe('Reserve stock');
     } finally {release();}

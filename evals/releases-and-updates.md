@@ -46,4 +46,6 @@ Both fixes have failing-then-passing regressions. Updates now pass `--force=fals
 
 The `99.0.0` and `100.0.0` update versions are local fixtures. They were never published publicly. No normal user installation, authentication file, or agent configuration was changed.
 
-GitHub Actions, initial npm authentication, trusted-publisher setup, and a public release were not exercised. The workflow selects Node 24; local verification used Node 22.23.1. Windows and macOS self-update behavior was not tested. Diagram rendering and offline exports retain their existing browser checks.
+The public GitHub repository now exists. Its first two Check runs passed installation, type checks, and the build, then failed the packaged flowchart smoke test. Diagnostics identified the `Order received` title as too wide for the hosted browser's font. The same failure reproduced locally with DejaVu Sans and generic monospace. The bundled terminal labels are now shorter. The new wider-font regression failed before that fixture change and passed afterward; all 15 affected flowchart and editor tests passed. Fixed node sizes and overflow validation were preserved.
+
+Initial npm authentication, trusted-publisher setup, and a public release remain unverified. The release workflow selects Node 24; local verification used Node 22.23.1. Windows and macOS self-update behavior was not tested. Diagram rendering and offline exports retain their existing browser checks.

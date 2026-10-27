@@ -21,6 +21,7 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 
 ### Fixed
 
+- The bundled flowchart uses concise terminal labels that fit wider fallback fonts.
 - Dragging diagram text pans the canvas without selecting text or opening node details.
 - Safe architecture shortcuts remove unnecessary connection bends while retaining blocked routes as fallbacks.
 - Source updates arriving during a save preview are applied before write controls resume.

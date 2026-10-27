@@ -6,7 +6,7 @@
   "rootViewId": "flow",
   "nodes": {
     "start": {
-      "label": "Order received",
+      "label": "Received",
       "summary": "A well-formed order enters the approval flow.",
       "details": "A well-formed order enters the approval flow. This is illustrative example data, not a claim extracted from a repository."
     },
@@ -32,7 +32,7 @@
       "details": "Inspect the authorization result. This is illustrative example data, not a claim extracted from a repository."
     },
     "done": {
-      "label": "Order accepted",
+      "label": "Accepted",
       "summary": "The order can now proceed to fulfillment.",
       "details": "The order can now proceed to fulfillment. This is illustrative example data, not a claim extracted from a repository."
     },
@@ -42,7 +42,7 @@
       "details": "Pause before trying the availability check again. This is illustrative example data, not a claim extracted from a repository."
     },
     "declined": {
-      "label": "Order declined",
+      "label": "Declined",
       "summary": "Release the held stock and report the failed authorization.",
       "details": "Release the held stock and report the failed authorization. This is illustrative example data, not a claim extracted from a repository."
     },

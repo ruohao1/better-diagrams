@@ -5,6 +5,19 @@ test.beforeEach(async({page})=>{
   await page.setContent('<main id="stage" style="width:1400px;height:850px"></main>');await page.addScriptTag({path:'dist/test/compiler.js'});
 });
 
+test('the shipped flowchart fits wider fallback fonts',async({page})=>{
+  const input=await readProject('examples/order-flow');input.themeCss+='\n.diagram { font-family: monospace; }';
+  const labels=await page.evaluate(async input=>{
+    const labels:string[]=[];
+    for(const viewId of Object.keys(input.document.views)){
+      const view=await DiagramCompiler.compileView(input,viewId,document.getElementById('stage')!);
+      labels.push(...[...view.svg.querySelectorAll('[data-node-id]')].map(node=>node.getAttribute('aria-label')!));
+    }
+    return labels;
+  },input);
+  expect(labels.sort()).toEqual(Object.values(input.document.nodes).map(node=>node.label).sort());
+});
+
 for(const direction of ['down','right'] as const)test('keeps the declared '+direction+' main path straight and retry clear',async({page},info)=>{
   const input=await readProject('examples/order-flow');
   const result=await page.evaluate(async({input,direction})=>{
