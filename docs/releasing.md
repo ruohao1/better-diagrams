@@ -1,6 +1,6 @@
 # Release Better Diagrams
 
-The npm package is `@isqrd/better-diagrams`. The executable and plugin names remain `better-diagrams`. Version `0.1.0` is prepared locally; no public publication is implied by the source version or changelog heading.
+The npm package is `@isqrd/better-diagrams`. The GitHub repository metadata targets `ruohao1/better-diagrams`, as selected by the user. The executable and plugin names remain `better-diagrams`. Version `0.1.0` is prepared locally; no public publication is implied by the source version or changelog heading.
 
 ## Prepare a version
 
@@ -22,9 +22,9 @@ Replace `v0.1.0` with the prepared version. Packing rebuilds the CLI and browser
 
 ## First publication
 
-Choose and configure the actual GitHub repository before publishing. Set `repository.type` to `git` and `repository.url` to that repository's Git URL in `package.json`. The release workflow derives the same URL from its GitHub environment.
+Choose and configure the actual GitHub repository before publishing. Set `repository.type` to `git` and `repository.url` to `git+https://github.com/OWNER/REPOSITORY.git`, using the actual owner/repository spelling. The release workflow derives the same URL from its GitHub environment.
 
-An npm account with publishing access to the `isqrd` organization must authenticate for the first publication. From the verified checkout:
+An npm account with publishing access to the `isqrd` organization must authenticate for the first publication. Use Node 24 and npm 12.2.1, matching the release workflow. From the verified checkout:
 
 ```sh
 npm login
@@ -40,7 +40,17 @@ Commit the verified release files, create the matching tag, and push it to that 
 
 ## Updating installed copies
 
-CLI update commands are added with the updater implementation. The package uses npm's stable `latest` channel. Diagram source, drafts, and application code are not part of an npm CLI update.
+```sh
+better-diagrams --version
+better-diagrams update --check
+better-diagrams update
+```
+
+The package uses npm's stable `latest` channel. Checks return JSON with `package`, `current`, `latest`, `published`, and `updateAvailable`. A missing first release returns `latest: null` and `published: false`. Invalid metadata, timeouts, and registry failures return an error and a nonzero exit status.
+
+An update runs only for the current npm global installation. Keep custom prefix configuration consistent with that installation, for example `npm_config_prefix=/your/prefix better-diagrams update`. Other copies use their owning installer. The command pins the global prefix, checks the tag, validates the exact release, installs that version with Node engine checks and lifecycle scripts disabled, and verifies the installed version before returning `updated: true`. A changed `latest` tag or prefix configuration does not redirect the selected update. Older versions do not trigger downgrades.
+
+Checks happen only when requested. Diagram source, drafts, and application code are outside the npm CLI installation.
 
 ## Current validation limits
 

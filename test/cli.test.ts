@@ -10,6 +10,12 @@ test('CLI help explains its commands without requiring a project',()=>{
   assert.ifError(result.error);assert.equal(result.status,0,result.stderr);assert.match(result.stdout,/check PROJECT/);assert.match(result.stdout,/dev PROJECT/);
 });
 
+test('CLI reports the embedded package version without a project or registry',async()=>{
+  const pkg=JSON.parse(await readFile('package.json','utf8'));
+  const result=spawnSync(process.execPath,['dist/cli.mjs','--version'],{encoding:'utf8',env:{...process.env,npm_config_registry:'http://127.0.0.1:1'}});
+  assert.ifError(result.error);assert.equal(result.status,0,result.stderr);assert.equal(result.stdout,pkg.version+'\n');assert.equal(result.stderr,'');
+});
+
 test('CLI checks source and builds a self-contained artifact', async () => {
   const dir=await mkdtemp(join(tmpdir(),'diagram-cli-'));
   try {

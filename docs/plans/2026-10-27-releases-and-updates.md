@@ -46,11 +46,11 @@
 
 **Interfaces:** Consume Task 1's name/version and tarball. Export `checkForUpdate()` and `updateInstallation()` from the CLI update module; `runCli` dispatches the new commands and preserves current JSON/error conventions.
 
-- [ ] **Step 1: Write failing CLI/update tests.** `--version` equals the packaged version offline. A disposable local registry drives current, newer, older, unpublished, malformed, prerelease, and failed checks. A real npm global installation updates to a checked fixture version and its next invocation reports that version. An incompatible engine is rejected. Checkout invocations leave the disposable global copy unchanged. Reject invalid command arguments before side effects.
-- [ ] **Step 2: Run** `npm run build && node --test test/cli.test.ts test/updates.test.ts`. Expected: FAIL on absent commands/module.
-- [ ] **Step 3: Implement** embedded metadata, strict semver validation, bounded npm checks, current-global-copy verification, exact-version installation with engine checks and no package lifecycle scripts, and installed-version verification. Update help and release/update instructions.
-- [ ] **Step 4: Run** `npm run check && npm run build && npm run test:unit && npm run test:browser` and `npm publish --dry-run --access public`. Expected: all exit 0, with no public publication. Record the live unpublished response and platform/authentication limits.
-- [ ] **Step 5: Commit** as `feat: check and install CLI updates explicitly`.
+- [x] **Step 1: Write failing CLI/update tests.** `--version` equals the packaged version offline. A disposable local registry drives current, newer, older, unpublished, malformed, prerelease, and failed checks. A real npm global installation updates to a checked fixture version and its next invocation reports that version. An incompatible engine is rejected. Checkout invocations leave the disposable global copy unchanged. Reject invalid command arguments before side effects.
+- [x] **Step 2: Run** `npm run build && node --test test/cli.test.ts test/updates.test.ts`. Expected: FAIL on absent commands/module.
+- [x] **Step 3: Implement** embedded metadata, strict semver validation, bounded npm checks, current-global-copy verification, exact-version installation with engine checks and no package lifecycle scripts, and installed-version verification. Update help and release/update instructions.
+- [x] **Step 4: Run** `npm run check && npm run build && npm run test:unit && npm run test:browser` and `npm publish --dry-run --access public`. Expected: all exit 0, with no public publication. Record the live unpublished response and platform/authentication limits.
+- [x] **Step 5: Commit** as `feat: check and install CLI updates explicitly`.
 
 ## Final verification
 

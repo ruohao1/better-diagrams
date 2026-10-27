@@ -21,14 +21,18 @@ async function release(tag){
   return {name:pkg.name,version:pkg.version,notes};
 }
 async function publish(packFile){
-  const pkg=await json('package.json'),info=await release('v'+pkg.version),[pack]=await json(packFile);
+  const pkg=await json('package.json'),info=await release('v'+pkg.version),packs=Object.values(await json(packFile));
+  require(packs.length===1,'Expected exactly one packed artifact');
+  const [pack]=packs;
   require(pack?.name===info.name && pack.version===info.version && typeof pack.filename==='string' && basename(pack.filename)===pack.filename,'Packed artifact must match the release');
   const artifact=resolve(dirname(packFile),pack.filename),integrity='sha512-'+createHash('sha512').update(await readFile(artifact)).digest('base64');
   require(pack.integrity===integrity,'Packed artifact integrity does not match its bytes');
   let remote;
   try{
     const result=await execute('npm',['view',info.name+'@'+info.version,'dist.integrity','--json','--fetch-retries=0','--fetch-timeout=5000'],{timeout:10_000,maxBuffer:64*1024});
-    remote=JSON.parse(result.stdout);
+    const value=JSON.parse(result.stdout);
+    require(!Array.isArray(value) || value.length===1,'Expected exactly one published integrity value');
+    remote=Array.isArray(value)?value[0]:value;
   }catch(error){
     let code;try{code=JSON.parse(error.stdout).error?.code;}catch{}
     if(code!=='E404')throw new Error('Cannot verify the existing npm release; publication stopped', {cause:error});

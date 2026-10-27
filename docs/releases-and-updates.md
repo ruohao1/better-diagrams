@@ -2,6 +2,8 @@
 
 Use the npm organization supplied by the user: `isqrd`. Publish the package as `@isqrd/better-diagrams`; retain `better-diagrams` as the executable and plugin name. The first prepared version is `0.1.0`. A prepared artifact is not a published release.
 
+The user selected `ruohao1/better-diagrams` as the GitHub repository location. Local metadata and the origin URL use that location; creating or publishing the remote is a separate step.
+
 ## Approach
 
 Use npm for installation and updates, and GitHub releases for the changelog and downloadable tarball. This reuses the existing Node/npm toolchain. GitHub-only downloads would need a separate installation mechanism. Silent self-updating would change installed software during diagram work; the selected default is an explicit check and explicit update.

@@ -9,6 +9,7 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 ### Added
 
 - A `better-diagrams` CLI with `check`, `build`, and `dev` commands.
+- `--version`, `update --check`, and explicit updates of the current npm global installation. Updates pin the checked version and prefix and enforce Node engine requirements.
 - Architecture diagrams with fixed-size cards, summaries, local SVG logos, colors, typed connections, and nested boundaries.
 - Flowcharts with action, decision, start, and end shapes, labeled outcomes, and authored main paths.
 - Diagram-only viewing with an optional legend, pan and zoom controls, and modal details and internal views.

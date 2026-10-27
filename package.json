@@ -28,6 +28,10 @@
     "better-diagrams": "dist/cli.mjs"
   },
   "description": "Interactive software diagrams with automatic layout and local browser editing.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ruohao1/better-diagrams.git"
+  },
   "files": [
     "dist/cli.mjs",
     "dist/viewer.js",

@@ -47,7 +47,7 @@ test('publication reuses identical releases and rejects changed artifacts or reg
     if(mode==='broken'){res.writeHead(503).end('{"error":"unavailable"}');return;}
     if(req.method==='PUT'){let body='';for await(const chunk of req)body+=chunk;publications.push(JSON.parse(body));res.end('{"ok":true}');return;}
     if(mode==='missing'){res.writeHead(404).end('{"error":"not_found"}');return;}
-    const [pack]=JSON.parse(await readFile(join(root,'pack.json'),'utf8'));
+    const [pack]=Object.values(JSON.parse(await readFile(join(root,'pack.json'),'utf8'))) as {integrity:string}[];
     res.end(JSON.stringify({name:'@isqrd/better-diagrams','dist-tags':{latest:'0.1.0'},versions:{'0.1.0':{name:'@isqrd/better-diagrams',version:'0.1.0',dist:{integrity:mode==='same'?pack.integrity:'sha512-different'}}}}));
   });
   await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));const address=server.address();assert.ok(address && typeof address==='object');
@@ -55,8 +55,9 @@ test('publication reuses identical releases and rejects changed artifacts or reg
     await writeFile(join(root,'.npmrc'),`registry=http://127.0.0.1:${address.port}\n//127.0.0.1:${address.port}/:_authToken=fixture-token\ncache=${join(root,'npm-cache')}\nupdate-notifier=false\n`);
     const packed=await execute('npm',['pack','--json','--pack-destination',root],{cwd:root});await writeFile(join(root,'pack.json'),packed.stdout);
     const published=await run(root,['publish','pack.json']);assert.equal(published.status,0,published.stderr);assert.equal(JSON.parse(published.stdout).published,true);assert.equal(publications.length,1);assert.equal(publications[0].name,'@isqrd/better-diagrams');
-    mode='same';const reused=await run(root,['publish','pack.json']);assert.equal(reused.status,0,reused.stderr);assert.equal(JSON.parse(reused.stdout).published,false);assert.equal(publications.length,1);
+    mode='same';const [pack]=Object.values(JSON.parse(packed.stdout)) as {name:string;filename:string}[];
+    for(const shape of [[pack],{[pack.name]:pack}]){await writeFile(join(root,'pack.json'),JSON.stringify(shape));const reused=await run(root,['publish','pack.json']);assert.equal(reused.status,0,reused.stderr);assert.equal(JSON.parse(reused.stdout).published,false);assert.equal(publications.length,1);}
     for(const failure of ['different','broken']){mode=failure;const result=await run(root,['publish','pack.json']);assert.equal(result.status,1,result.stdout);assert.equal(publications.length,1);}
-    mode='missing';const [pack]=JSON.parse(packed.stdout);await writeFile(join(root,pack.filename),'changed archive');const tampered=await run(root,['publish','pack.json']);assert.equal(tampered.status,1);assert.match(tampered.stderr,/integrity/i);assert.equal(publications.length,1);
+    mode='missing';await writeFile(join(root,pack.filename),'changed archive');const tampered=await run(root,['publish','pack.json']);assert.equal(tampered.status,1);assert.match(tampered.stderr,/integrity/i);assert.equal(publications.length,1);
   }finally{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true});}
 });

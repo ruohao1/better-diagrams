@@ -21,11 +21,12 @@ test('packed CLI installs offline outside the checkout and builds a working offl
   const run=(command:string,args:string[],cwd=dir)=>{const result=spawnSync(command,args,{cwd,encoding:'utf8',timeout:60_000});assert.ifError(result.error);assert.equal(result.status,0,result.stderr);return result;};
   try {
     const packed=run('npm',['pack','--json','--pack-destination',dir],process.cwd());
-    const meta=JSON.parse(packed.stdout)[0];const files:string[]=meta.files.map((file:{path:string})=>file.path);
+    const meta=Object.values(JSON.parse(packed.stdout))[0] as {filename:string;files:{path:string}[]};const files=meta.files.map(file=>file.path);
     for(const path of ['dist/cli.mjs','dist/viewer.js','dist/editor.js','dist/licenses/elkjs-LICENSE.md','dist/licenses/semver-LICENSE','plugin.json','CHANGELOG.md','skills/diagram-authoring/SKILL.md'])assert.ok(files.includes(path),path);
     assert.ok(!files.some(path=>path.startsWith('dist/test/')||path.startsWith('docs/')||path.startsWith('src/')||path.startsWith('test/')||path.startsWith('node_modules/')||path.includes('.prototype.')));
     const prefix=join(dir,'prefix');run('npm',['install','--global','--prefix',prefix,'--ignore-scripts','--offline',join(dir,meta.filename)]);
     const binary=join(prefix,'bin/better-diagrams'),installed=join(prefix,'lib/node_modules/@isqrd/better-diagrams'),starter=join(dir,'starter');await mkdir(starter);await copyFile(join(installed,'skills/diagram-authoring/assets/minimal-diagram.json'),join(starter,'diagram.json'));
+    assert.equal(run(binary,['--version']).stdout,JSON.parse(await readFile(join(installed,'package.json'),'utf8')).version+'\n');
     const browser=await chromium.launch({headless:true,executablePath:existsSync('/usr/bin/google-chrome')?'/usr/bin/google-chrome':undefined,args:['--no-sandbox']});
     try {
       const context=await browser.newContext({offline:true});
