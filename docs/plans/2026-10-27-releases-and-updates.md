@@ -55,3 +55,5 @@
 ## Final verification
 
 Execute natively and keep RED/GREEN evidence in the scratch ledger. Request one fresh whole-change review after both tasks, then fix important findings with regressions in one pass. Keep the implementation branch and report the publisher setup needed for the first actual release.
+
+The final review identified inherited npm force configuration and Windows process launching. Both were fixed in one pass. `src/npm.ts` now provides the shared shell-free launcher for `src/updates.ts` and `scripts/release.mjs`; `test/npm.test.ts` covers executable selection and argument preservation. The engine regression supplies inherited force configuration. Final checks passed: 47 Node tests, 38 Chromium tests, and a publication dry run. Live publication and native Windows/macOS execution remain outside the observed evidence.

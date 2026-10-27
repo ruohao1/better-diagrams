@@ -1,14 +1,12 @@
-import {execFile} from 'node:child_process';
-import {promisify} from 'node:util';
 import {readFile,realpath} from 'node:fs/promises';
 import {dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import semver from 'semver';
 import pkg from '../package.json' with {type:'json'};
+import {runNpm} from './npm.ts';
 
-const execute=promisify(execFile);
 async function npm(args:string[],timeout=10_000):Promise<string>{
-  try{return (await execute('npm',args,{timeout,maxBuffer:1024*1024,env:{...process.env,npm_config_update_notifier:'false'}})).stdout.trim();}
+  try{return (await runNpm(args,timeout)).stdout.trim();}
   catch(error){
     const failure=error as Error & {stdout?:string;code?:string;killed?:boolean};
     let code=failure.killed?'ETIMEDOUT':failure.code==='ENOENT'?'ENOENT':'FAILED';
@@ -44,7 +42,7 @@ export async function updateInstallation():Promise<UpdateStatus>{
   if(!matches)throw new Error('This copy is not the current npm global installation. Update it through its owning installer, or install '+pkg.name+' globally with npm.');
   const status=await checkForUpdate();
   if(!status.updateAvailable)return {...status,updated:false};
-  await npm(['install','--global','--prefix',prefix,'--engine-strict','--ignore-scripts','--no-audit','--no-fund','--json',pkg.name+'@'+status.latest],120_000);
+  await npm(['install','--global','--prefix',prefix,'--engine-strict','--force=false','--ignore-scripts','--no-audit','--no-fund','--json',pkg.name+'@'+status.latest],120_000);
   const installed=JSON.parse(await readFile(resolve(installedRoot,'package.json'),'utf8'));
   if(installed.name!==pkg.name || installed.version!==status.latest)throw new Error('npm finished, but the installed version could not be verified');
   return {...status,updated:true};

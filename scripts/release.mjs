@@ -1,11 +1,10 @@
 import {readFile} from 'node:fs/promises';
 import {resolve,dirname,basename} from 'node:path';
 import {createHash} from 'node:crypto';
-import {execFile} from 'node:child_process';
-import {promisify} from 'node:util';
 import semver from 'semver';
+import {runNpm} from '../src/npm.ts';
 
-const execute=promisify(execFile),json=async path=>JSON.parse(await readFile(path,'utf8'));
+const json=async path=>JSON.parse(await readFile(path,'utf8'));
 function require(condition,message){if(!condition)throw new Error(message);}
 async function release(tag){
   const [pkg,lock,plugin,changelog]=await Promise.all([json('package.json'),json('package-lock.json'),json('plugin.json'),readFile('CHANGELOG.md','utf8')]);
@@ -29,7 +28,7 @@ async function publish(packFile){
   require(pack.integrity===integrity,'Packed artifact integrity does not match its bytes');
   let remote;
   try{
-    const result=await execute('npm',['view',info.name+'@'+info.version,'dist.integrity','--json','--fetch-retries=0','--fetch-timeout=5000'],{timeout:10_000,maxBuffer:64*1024});
+    const result=await runNpm(['view',info.name+'@'+info.version,'dist.integrity','--json','--fetch-retries=0','--fetch-timeout=5000'],10_000,64*1024);
     const value=JSON.parse(result.stdout);
     require(!Array.isArray(value) || value.length===1,'Expected exactly one published integrity value');
     remote=Array.isArray(value)?value[0]:value;
@@ -38,7 +37,7 @@ async function publish(packFile){
     if(code!=='E404')throw new Error('Cannot verify the existing npm release; publication stopped', {cause:error});
   }
   require(remote===undefined || remote===integrity,'Published version has different integrity; choose a new version');
-  if(remote===undefined)await execute('npm',['publish',artifact,'--access','public','--ignore-scripts'],{timeout:120_000,maxBuffer:1024*1024});
+  if(remote===undefined)await runNpm(['publish',artifact,'--access','public','--ignore-scripts'],120_000);
   process.stdout.write(JSON.stringify({ok:true,package:info.name,version:info.version,published:remote===undefined})+'\n');
 }
 try{

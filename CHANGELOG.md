@@ -27,3 +27,5 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 - Custom SVG text size checks include nested spans and transforms after uniform fitting.
 - Source validation rejects array values where enum strings are required.
 - Dev-server shutdown closes connections with incomplete HTTP headers.
+- Updates enforce Node engine requirements even when npm's force setting is enabled.
+- Release and update commands resolve standard Windows npm launchers without shell parsing.

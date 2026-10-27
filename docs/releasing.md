@@ -28,13 +28,16 @@ An npm account with publishing access to the `isqrd` organization must authentic
 
 ```sh
 npm login
+node scripts/release.mjs notes v0.1.0
 npm pack --json --pack-destination dist > dist/package.json
-node scripts/release.mjs publish dist/package.json
+npm publish dist/isqrd-better-diagrams-0.1.0.tgz --access public --ignore-scripts
 ```
 
-The publication script checks package/lock/plugin versions, release notes, and the archive's SHA-512 integrity. It publishes only when the version is absent. If an identical artifact is already published, it reports `published: false`. Different bytes under the same version stop the release.
+Run the first publish directly so npm can handle interactive authentication. The notes command validates package/lock/plugin versions and the versioned changelog. Use the tarball just produced by npm pack.
 
-Configure an npm trusted publisher for the package, using the actual GitHub owner/repository and the workflow filename `release.yml`. Allow direct `npm publish`. The workflow uses GitHub-hosted runners, Node 24, npm 12.2.1, and an OIDC token; it does not require a stored npm token. See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
+The automated publication script checks those versions and notes plus the archive's SHA-512 integrity. It publishes only when the version is absent. If an identical artifact is already published, it reports `published: false`. Different bytes under the same version stop the release.
+
+Immediately before the first new version that CI will publish, configure an npm trusted publisher for the package. Use the actual GitHub owner/repository and the workflow filename `release.yml`. Allow direct `npm publish`. A new publisher configuration must complete a successful publication within two days; reusing an existing bootstrap version does not validate it. The workflow uses GitHub-hosted runners, Node 24, npm 12.2.1, and an OIDC token; it does not require a stored npm token. See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
 
 Commit the verified release files, create the matching tag, and push it to that GitHub repository. The tag workflow runs the full suite, prepares notes, packs and publishes the artifact, and creates a GitHub release with the tarball. The first tag can reuse the initial npm publication only when the tarball matches exactly. Preserve the same repository metadata and npm toolchain for that bootstrap artifact; different bytes require a new version.
 

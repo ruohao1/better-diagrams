@@ -7,10 +7,11 @@ The prepared package is `@isqrd/better-diagrams@0.1.0`. Its executable and plugi
 ## Results
 
 - Type checks and the build passed.
-- The complete suite passed with npm 12.2.1: 44 Node tests and 38 Chromium tests.
-- Fourteen focused CLI, release, packaging, and updater tests passed with npm 10.9.8.
+- The final complete suite passed with npm 12.2.1: 47 Node tests and 38 Chromium tests.
+- Twelve focused launcher, release, and updater tests passed with npm 10.9.8 after the review fixes.
 - `npm publish --dry-run --access public --json` passed with npm 12.2.1. It described `isqrd-better-diagrams-0.1.0.tgz`, containing 20 files. It warned that publisher authentication was absent. No public publication occurred.
 - Offline installation of the scoped tarball retained a working executable, embedded version, skill resources, v1/v2 examples, logos, and browser exports. Source/test/planning/prototype trees stayed outside the tarball. Bundled dependency licenses were included.
+- Two independent npm 12 packs produced the same SHA-512 integrity. The workflow's repository metadata command preserved the package file byte for byte. The local candidate and verification record are under `dist/release-candidate/`.
 
 ## Release tests
 
@@ -34,6 +35,12 @@ Tests install the actual compiled CLI into disposable npm global prefixes. The l
 - Changing npm's configured global prefix during an update originally redirected the install and failed verification. That regression failed before the fix and passed after the checked prefix was pinned; the unrelated prefix stayed untouched.
 
 An earlier malformed-tag test also failed: npm view converted an invalid tag to a synthetic E404, which looked like an unpublished package. Raw dist-tag validation now precedes an exact-version manifest lookup.
+
+## Final review
+
+A fresh reviewer found two important issues and no critical or minor issues. Inherited npm force configuration bypassed engine checks. Standard Windows npm command scripts could not be launched with `execFile('npm', ...)`.
+
+Both fixes have failing-then-passing regressions. Updates now pass `--force=false` explicitly. Release and update commands share a launcher that resolves Windows native executables or runs the module next to a standard `npm.cmd` through Node. Linux tests execute those resolved launchers and verify that paths containing spaces and shell characters remain literal arguments. Missing npm produces `ENOENT`. These tests do not substitute for native Windows execution.
 
 ## Limits
 

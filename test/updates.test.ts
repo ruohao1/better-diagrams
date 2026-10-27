@@ -48,8 +48,8 @@ async function fixture(prefixFromConfig=false){
     }
     await execute('npm',['install','--global','--ignore-scripts','--offline','--no-audit','--no-fund',join(root,archives.get(pkg.version)!.filename)],{cwd:root,env});
     const binary=join(prefix,'bin/better-diagrams');
-    const run=async(args:string[],fromCheckout=false)=>{
-      try{const result=await execute(fromCheckout?process.execPath:binary,fromCheckout?[checkout,...args]:args,{cwd:root,env,timeout:20_000});return {status:0,...result};}
+    const run=async(args:string[],fromCheckout=false,overrides:NodeJS.ProcessEnv={})=>{
+      try{const result=await execute(fromCheckout?process.execPath:binary,fromCheckout?[checkout,...args]:args,{cwd:root,env:{...env,...overrides},timeout:20_000});return {status:0,...result};}
       catch(error){const result=error as Error & {code:number;stdout:string;stderr:string};return {status:result.code,stdout:result.stdout,stderr:result.stderr};}
     };
     return {root,pkg,run,setMode:(value:string)=>{mode=value;},switchTag:()=>{switchLatest=true;},requests:()=>requests,downloads:()=>downloads,close:async()=>{server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true});}};
@@ -72,7 +72,7 @@ test('installed updater installs the checked version when latest changes during 
 });
 
 test('failed engine checks leave the installed CLI usable',async()=>{
-  const f=await fixture();try{f.setMode('engine');const result=await f.run(['update']);assert.equal(result.status,1);assert.match(result.stderr,/EBADENGINE/);assert.equal((await f.run(['--version'])).stdout,f.pkg.version+'\n');}finally{await f.close();}
+  const f=await fixture();try{f.setMode('engine');const result=await f.run(['update'],false,{npm_config_force:'true'});assert.equal(result.status,1);assert.match(result.stderr,/EBADENGINE/);assert.equal((await f.run(['--version'])).stdout,f.pkg.version+'\n');}finally{await f.close();}
 });
 
 test('updater retains its checked prefix when npm configuration changes',async()=>{
