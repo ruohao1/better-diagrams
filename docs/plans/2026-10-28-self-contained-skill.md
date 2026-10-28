@@ -45,4 +45,4 @@ The accepted approach reuses `skills` and distributes a complete folder. A custo
 - [x] Check generated-file freshness in CI and attach the skill ZIP in the release workflow.
 - [x] Run the actual shared installer into a disposable project, then use the installed skill to check/build a diagram without a global CLI.
 - [x] Update installation/release documentation and the Unreleased changelog. Validate the skill metadata.
-- [ ] Run type checks, the complete Node suite, and the existing browser suite. Obtain one fresh final review, fix material findings, and keep the plan with the implementation.
+- [x] Run type checks, the complete Node suite, and the existing browser suite. Obtain one fresh final review, fix material findings, and keep the plan with the implementation.

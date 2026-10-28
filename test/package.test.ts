@@ -97,5 +97,8 @@ test('the skill ZIP replaces older contents and runs after extraction',async()=>
     const incomplete=spawnSync(process.execPath,[script],{cwd:dir,encoding:'utf8'});assert.notEqual(incomplete.status,0);assert.match(incomplete.stderr,/complete skill runtime/);run('git',['add','skills/diagram-authoring/bin/editor.js']);
     const sourceSkill=join(dir,'skills/diagram-authoring/SKILL.md');await rm(sourceSkill);await symlink(join(dir,'stale.txt'),sourceSkill);
     const rejected=spawnSync(process.execPath,[script],{cwd:dir,encoding:'utf8'});assert.notEqual(rejected.status,0);assert.match(rejected.stderr,/regular file/);
+    await rm(sourceSkill);await copyFile('skills/diagram-authoring/SKILL.md',sourceSkill);
+    const outside=join(dir,'outside-assets');await cp(join(dir,'skills/diagram-authoring/assets'),outside,{recursive:true});await rm(join(dir,'skills/diagram-authoring/assets'),{recursive:true});await symlink(outside,join(dir,'skills/diagram-authoring/assets'),'dir');
+    const ancestor=spawnSync(process.execPath,[script],{cwd:dir,encoding:'utf8'});assert.notEqual(ancestor.status,0);assert.match(ancestor.stderr,/symbolic link/);
   }finally{await rm(dir,{recursive:true,force:true});}
 });
