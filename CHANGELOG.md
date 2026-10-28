@@ -4,6 +4,10 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 
 ## Unreleased
 
+### Fixed
+
+- Release checks handle npm's OIDC requests before reading update metadata and use the same npm version as publication.
+
 ## [0.1.0]
 
 ### Added

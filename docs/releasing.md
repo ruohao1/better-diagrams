@@ -1,6 +1,6 @@
 # Release Better Diagrams
 
-The npm package is `@isqrd/better-diagrams`. The GitHub repository metadata targets `ruohao1/better-diagrams`, as selected by the user. The executable and plugin names remain `better-diagrams`. Version `0.1.0` is prepared locally; no public publication is implied by the source version or changelog heading.
+The npm package is [`@isqrd/better-diagrams`](https://www.npmjs.com/package/@isqrd/better-diagrams). Version `0.1.0` is published. The GitHub repository is `ruohao1/better-diagrams`. The executable and plugin names remain `better-diagrams`.
 
 ## Prepare a version
 
@@ -24,7 +24,7 @@ Replace `v0.1.0` with the prepared version. Packing rebuilds the CLI and browser
 
 Choose and configure the actual GitHub repository before publishing. Set `repository.type` to `git` and `repository.url` to `git+https://github.com/OWNER/REPOSITORY.git`, using the actual owner/repository spelling. The release workflow derives the same URL from its GitHub environment.
 
-An npm account with publishing access to the `isqrd` organization must authenticate for the first publication. Use Node 24 and npm 12.2.1, matching the release workflow. From the verified checkout:
+An npm account with publishing access to the `isqrd` organization must authenticate and enable 2FA for the first publication. Complete npm's browser authentication challenge when prompted. Use Node 24 and npm 12.2.1, matching the release workflow. From the verified checkout:
 
 ```sh
 npm login
@@ -40,6 +40,8 @@ The automated publication script checks those versions and notes plus the archiv
 Immediately before the first new version that CI will publish, configure an npm trusted publisher for the package. Use the actual GitHub owner/repository and the workflow filename `release.yml`. Allow direct `npm publish`. A new publisher configuration must complete a successful publication within two days; reusing an existing bootstrap version does not validate it. The workflow uses GitHub-hosted runners, Node 24, npm 12.2.1, and an OIDC token; it does not require a stored npm token. See [npm trusted publishing](https://docs.npmjs.com/trusted-publishers/).
 
 Commit the verified release files, create the matching tag, and push it to that GitHub repository. The tag workflow runs the full suite, prepares notes, packs and publishes the artifact, and creates a GitHub release with the tarball. The first tag can reuse the initial npm publication only when the tarball matches exactly. Preserve the same repository metadata and npm toolchain for that bootstrap artifact; different bytes require a new version.
+
+If a workflow stops after npm publication, preserve the published tag and archive. Fix the workflow on the branch. To finish the GitHub release manually, verify the saved archive against npm's `dist.integrity`, then use `gh release create` with `--verify-tag`, that archive, and the notes for the published version. Do not repack the updated branch as the published version.
 
 ## Updating installed copies
 
@@ -57,4 +59,4 @@ Checks happen only when requested. Diagram source, drafts, and application code 
 
 ## Current validation limits
 
-Local checks use disposable npm installations and a loopback registry. They do not publish to npm or run GitHub Actions. Configuring a GitHub remote, initial npm authentication, trusted-publisher setup, and an actual release remain separate deployment steps.
+Version `0.1.0` was published with interactive 2FA. Its public archive integrity, installation, version output, and update check were verified. Trusted publishing for a future new version and native Windows/macOS updates remain unverified. See [release evidence](../evals/releases-and-updates.md) for the bootstrap CI failure and verification details.

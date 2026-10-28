@@ -56,16 +56,14 @@ Routing compares a few layout candidates and simplifies safe architecture detour
 
 ## Use from a coding agent
 
-Build and pack a local release, then install its CLI:
+Install the published CLI:
 
 ```sh
-npm run build
-npm pack --pack-destination /tmp
-npm install --global /tmp/isqrd-better-diagrams-0.1.0.tgz
+npm install --global @isqrd/better-diagrams
 better-diagrams --help
 ```
 
-The npm package name is `@isqrd/better-diagrams`. These commands install this checkout's tarball. After the first public release, install it with `npm install --global @isqrd/better-diagrams`. The executable remains `better-diagrams`. See [release preparation](docs/releasing.md) for the publication workflow.
+The executable remains `better-diagrams`. To test a checkout, run `npm pack --pack-destination /tmp` and install the resulting tarball. See [release preparation](docs/releasing.md) for the publication workflow.
 
 Check the installed version and available stable release:
 
@@ -77,11 +75,11 @@ better-diagrams update
 
 Update commands return JSON. A check reports the current/latest versions and whether an update is available. Before the first stable publication, it reports `published: false`. An update installs the exact checked version, verifies the result, and reports `updated: true`. Checks use npm's configured registry. The updater requires the current npm global installation and respects its configured prefix. Update checkout, local dependency, npx, and plugin copies through their owning installer. Diagram commands and offline browser artifacts do not check for releases.
 
-Copy the skill into a target project's Codex skill directory:
+Copy the installed skill into a target project's Codex skill directory:
 
 ```sh
 mkdir -p /path/to/project/.agents/skills
-cp -R skills/diagram-authoring /path/to/project/.agents/skills/
+cp -R "$(npm root --global)/@isqrd/better-diagrams/skills/diagram-authoring" /path/to/project/.agents/skills/
 ```
 
 Invoke `$diagram-authoring` in that project. The skill guides source inspection, purpose/detail choices, authoring, and accurate check/build reporting. It requires the CLI on PATH. A complete plugin bundle also supports invoking its bundled CLI with Node. The root `plugin.json` provides portable plugin metadata; the recorded Codex evaluation uses project-local skill discovery.

@@ -1,15 +1,16 @@
 # Release and update verification
 
-Observed on 2026-10-27 on Linux with Node.js 22.23.1, npm 10.9.8 and 12.2.1, and Google Chrome 155.0.8059.84.
+Observed on 2026-10-27 and 2026-10-28 on Linux with Node.js 22.23.1, npm 10.9.8 and 12.2.1, and Google Chrome 155.0.8059.84.
 
-The prepared package is `@isqrd/better-diagrams@0.1.0`. Its executable and plugin remain `better-diagrams`. The user selected `ruohao1/better-diagrams` for GitHub metadata. Configuring a local origin URL does not create or publish that repository.
+The published package is `@isqrd/better-diagrams@0.1.0`. Its executable and plugin remain `better-diagrams`. The public GitHub repository is `ruohao1/better-diagrams`.
 
 ## Results
 
 - Type checks and the build passed.
-- The final complete suite passed with npm 12.2.1: 47 Node tests and 38 Chromium tests.
+- The initial complete suite passed with npm 12.2.1: 47 Node tests and 38 Chromium tests. Hosted Check run 40581074291 passed 47 Node tests and 39 Chromium tests after the wider-font regression was added.
 - Twelve focused launcher, release, and updater tests passed with npm 10.9.8 after the review fixes.
-- `npm publish --dry-run --access public --json` passed with npm 12.2.1. It described `isqrd-better-diagrams-0.1.0.tgz`, containing 20 files. It warned that publisher authentication was absent. No public publication occurred.
+- `npm publish --dry-run --access public --json` passed with npm 12.2.1. It described `isqrd-better-diagrams-0.1.0.tgz`, containing 20 files. The later public publication used interactive 2FA. npm's public `dist.integrity` matches the verified archive.
+- Installation from public npm into a disposable prefix passed. `--version` reported `0.1.0`; `update --check` reported `published: true`, `latest: "0.1.0"`, and `updateAvailable: false`.
 - Offline installation of the scoped tarball retained a working executable, embedded version, skill resources, v1/v2 examples, logos, and browser exports. Source/test/planning/prototype trees stayed outside the tarball. Bundled dependency licenses were included.
 - Two independent npm 12 packs produced the same SHA-512 integrity. The workflow's repository metadata command preserved the package file byte for byte. The local candidate and verification record are under `dist/release-candidate/`.
 
@@ -44,8 +45,12 @@ Both fixes have failing-then-passing regressions. Updates now pass `--force=fals
 
 ## Limits
 
-The `99.0.0` and `100.0.0` update versions are local fixtures. They were never published publicly. No normal user installation, authentication file, or agent configuration was changed.
+The `99.0.0` and `100.0.0` update versions are local fixtures. They were never published publicly. No normal user installation or agent configuration was changed. Authorized npm login stored normal local authentication, and the account owner enabled 2FA in npm's browser interface.
 
 The public GitHub repository now exists. Its first two Check runs passed installation, type checks, and the build, then failed the packaged flowchart smoke test. Diagnostics identified the `Order received` title as too wide for the hosted browser's font. The same failure reproduced locally with DejaVu Sans and generic monospace. The bundled terminal labels are now shorter. The new wider-font regression failed before that fixture change and passed afterward; all 15 affected flowchart and editor tests passed. Fixed node sizes and overflow validation were preserved.
 
-Initial npm authentication, trusted-publisher setup, and a public release remain unverified. The release workflow selects Node 24; local verification used Node 22.23.1. Windows and macOS self-update behavior was not tested. Diagram rendering and offline exports retain their existing browser checks.
+The initial tag release run 40749700635 passed installation, type checks, the build, and 46 of 47 Node tests. The moving-tag fixture counted npm's OIDC request as its first metadata read and changed `latest` before the updater read it. A fake OIDC token against the loopback registry reproduced the failure locally. Advancing the tag only after the dist-tag response fixed that regression. The corrected regression passed with npm 10 and 12; type checks and all 47 Node tests passed with npm 12.2.1. Check CI now uses npm 12.2.1 so it exercises the same OIDC path as release CI.
+
+The published `v0.1.0` tag stays at commit `17cf7c3e11bf34e95ae990d730e7a13d11664247`. Its npm archive is preserved for GitHub release recovery; the branch's later test and documentation fixes do not replace that artifact.
+
+Trusted publishing for a future new version remains unverified. The release workflow selects Node 24; local verification used Node 22.23.1. Windows and macOS self-update behavior was not tested. Diagram rendering and offline exports retain their existing browser checks.

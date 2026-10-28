@@ -12,7 +12,7 @@ const execute=promisify(execFile),checkout=resolve('dist/cli.mjs');
 const scripts={postinstall:'node -e "require(\'node:fs\').writeFileSync(\'postinstall-ran\',\'yes\')"'};
 async function fixture(prefixFromConfig=false){
   const root=await mkdtemp(join(tmpdir(),'diagram-updates-')),prefix=join(root,'prefix'),pkg=JSON.parse(await readFile('package.json','utf8'));
-  let mode='newer',switchLatest=false,requests=0,downloads=0,port=0;
+  let mode='newer',switchLatest=false,tagRead=false,requests=0,downloads=0,port=0;
   const archives=new Map<string,{filename:string;integrity:string;shasum:string}>();
   const server=createServer(async(req,res)=>{
     res.setHeader('content-type','application/json');res.setHeader('cache-control','no-store');
@@ -25,8 +25,8 @@ async function fixture(prefixFromConfig=false){
     if(mode==='timeout')return;
     if(!['/@isqrd/better-diagrams','/-/package/@isqrd/better-diagrams/dist-tags'].includes(path) || mode==='missing'){res.writeHead(404).end('{"error":"not_found"}');return;}
     if(mode==='broken'){res.writeHead(503).end('{"error":"unavailable"}');return;}
-    const latest=mode==='current'?pkg.version:mode==='older'?'0.0.1':mode==='prerelease'?'99.0.0-beta.1':mode==='malformed'?'not-a-version':switchLatest && requests>1?'100.0.0':'99.0.0';
-    if(path.endsWith('/dist-tags')){if(mode==='move-prefix')await writeFile(join(root,'user.npmrc'),'prefix='+join(root,'other-prefix')+'\n');res.end(JSON.stringify({latest}));return;}
+    const latest=mode==='current'?pkg.version:mode==='older'?'0.0.1':mode==='prerelease'?'99.0.0-beta.1':mode==='malformed'?'not-a-version':switchLatest && tagRead?'100.0.0':'99.0.0';
+    if(path.endsWith('/dist-tags')){tagRead=true;if(mode==='move-prefix')await writeFile(join(root,'user.npmrc'),'prefix='+join(root,'other-prefix')+'\n');res.end(JSON.stringify({latest}));return;}
     const name=mode==='wrong-name'?'unrelated-package':'@isqrd/better-diagrams',versions:Record<string,unknown>={};
     for(const version of new Set([latest,'99.0.0','100.0.0'])){
       const archive=archives.get(version)??archives.get('99.0.0')!;
@@ -68,7 +68,7 @@ test('installed update checks distinguish newer, current, older, and unpublished
 });
 
 test('installed updater installs the checked version when latest changes during installation',async()=>{
-  const f=await fixture();try{f.switchTag();const result=await f.run(['update']);assert.equal(result.status,0,result.stderr);const status=JSON.parse(result.stdout);assert.equal(status.updated,true);assert.equal(status.latest,'99.0.0');assert.equal((await f.run(['--version'])).stdout,'99.0.0\n');assert.equal(f.downloads(),1);assert.equal(existsSync(join(f.root,'prefix/lib/node_modules/@isqrd/better-diagrams/postinstall-ran')),false);}finally{await f.close();}
+  const f=await fixture();try{f.switchTag();const result=await f.run(['update'],false,{GITHUB_ACTIONS:'true',NPM_ID_TOKEN:'fixture-only'});assert.equal(result.status,0,result.stderr);const status=JSON.parse(result.stdout);assert.equal(status.updated,true);assert.equal(status.latest,'99.0.0');assert.equal((await f.run(['--version'])).stdout,'99.0.0\n');assert.equal(f.downloads(),1);assert.equal(existsSync(join(f.root,'prefix/lib/node_modules/@isqrd/better-diagrams/postinstall-ran')),false);}finally{await f.close();}
 });
 
 test('failed engine checks leave the installed CLI usable',async()=>{
