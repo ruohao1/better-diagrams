@@ -4,6 +4,11 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 
 ## Unreleased
 
+### Added
+
+- A self-contained `diagram-authoring` skill with its own CLI, viewer, editor, and dependency licenses. Install it with the shared `skills` installer without a separate global CLI installation.
+- A `pack:skill` command that builds `better-diagrams-skill.zip`, with the ZIP attached alongside the npm tarball in future GitHub releases.
+
 ### Fixed
 
 - Release checks handle npm's OIDC requests before reading update metadata and use the same npm version as publication.

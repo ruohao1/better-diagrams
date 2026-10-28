@@ -7,7 +7,7 @@ description: Use when a coding agent needs to create or update interactive softw
 
 Author diagram source. Better Diagrams supplies layout, exploration, editing, and export.
 
-Use `better-diagrams` on PATH. A complete plugin bundle also provides `../../dist/cli.mjs` relative to this skill directory; invoke that file with Node if the command is absent. If neither is available, report the CLI prerequisite. Do not assume a same-named public registry package is this tool.
+Use the bundled CLI with Node.js 22.18 or later. Resolve `bin/cli.mjs` relative to this `SKILL.md` and replace that path in the commands below with its absolute installed path. Keep the user's working directory: project and output paths resolve from there. The skill includes its runtime and needs no npm installation. If the bundled CLI is missing, report an incomplete skill installation.
 
 For a new diagram, establish its purpose, audience, visible scope, and detail level. Reuse choices already supplied or approved. If a consequential choice is missing, propose it before authoring.
 
@@ -21,9 +21,9 @@ The compiler places nodes and routes connections; the source has no coordinates.
 
 | Command | Result |
 | --- | --- |
-| `better-diagrams check PROJECT` | Validate document structure and asset paths |
-| `better-diagrams build PROJECT --out FILE.html` | Create self-contained HTML |
-| `better-diagrams dev PROJECT` | Start local editing and watch diagram files; report the printed URL |
+| `node bin/cli.mjs check PROJECT` | Validate document structure and asset paths |
+| `node bin/cli.mjs build PROJECT --out FILE.html` | Create self-contained HTML |
+| `node bin/cli.mjs dev PROJECT` | Start local editing and watch diagram files; report the printed URL |
 
 Run check and build after authoring. These commands do not verify rendering. If browser access is available, open the artifact and check fixed text bounds, labeled routes, details, modal Back/Close, and Export SVG after pan/zoom. Use Fit when a node is outside the readable initial viewport. If browser launch is denied or unavailable, return the artifact with rendering marked unverified. Built HTML contains only the diagram and optional legend, with on-demand controls. Details and internal views use one modal. SVG export contains the complete active diagram and optional legend, excluding the modal, outer views, and controls. Routing is a bounded heuristic with an ELK fallback, not a guarantee of a global optimum.
 

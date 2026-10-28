@@ -14,5 +14,9 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run check
       - run: npm run build
+      - name: Check generated skill runtime
+        run: |
+          git diff --exit-code --stat -- skills/diagram-authoring/bin skills/diagram-authoring/licenses
+          test -z "$(git ls-files --others --exclude-standard -- skills/diagram-authoring/bin skills/diagram-authoring/licenses)"
       - run: npm run test:unit
       - run: npm run test:browser

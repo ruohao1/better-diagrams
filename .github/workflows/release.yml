@@ -25,6 +25,10 @@ jobs:
       - run: npx --no-install playwright install --with-deps chromium
       - run: npm run check
       - run: npm run build
+      - name: Check generated skill runtime
+        run: |
+          git diff --exit-code --stat -- skills/diagram-authoring/bin skills/diagram-authoring/licenses
+          test -z "$(git ls-files --others --exclude-standard -- skills/diagram-authoring/bin skills/diagram-authoring/licenses)"
       - run: npm run test:unit
       - run: npm run test:browser
       - name: Prepare release notes and repository metadata
@@ -34,6 +38,7 @@ jobs:
           node scripts/release.mjs notes "$RELEASE_TAG" > dist/release-notes.md
           npm pkg set repository.type=git repository.url="git+https://github.com/${GITHUB_REPOSITORY}.git"
       - run: npm pack --json --pack-destination dist > dist/package.json
+      - run: node scripts/package-skill.mjs
       - name: Publish the verified tarball to npm
         run: node scripts/release.mjs publish dist/package.json
       - name: Create the GitHub release
@@ -42,7 +47,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" dist/*.tgz --clobber
+            gh release upload "$RELEASE_TAG" dist/*.tgz dist/better-diagrams-skill.zip --clobber
           else
-            gh release create "$RELEASE_TAG" dist/*.tgz --verify-tag --title "$RELEASE_TAG" --notes-file dist/release-notes.md
+            gh release create "$RELEASE_TAG" dist/*.tgz dist/better-diagrams-skill.zip --verify-tag --title "$RELEASE_TAG" --notes-file dist/release-notes.md
           fi
