@@ -18,7 +18,17 @@ node scripts/release.mjs notes v0.1.0
 npm publish --dry-run --access public
 ```
 
-Replace `v0.1.0` with the prepared version. Packing rebuilds the CLI and browser bundles. The tarball includes examples, skill resources, the changelog, and bundled dependency licenses. It excludes tests, source trees, plans, and prototypes.
+Replace `v0.1.0` with the prepared version. Packing rebuilds the CLI and browser bundles. The tarball includes examples, the complete skill, the changelog, and bundled dependency licenses. It excludes tests, source trees, plans, and prototypes.
+
+The build also updates `skills/diagram-authoring/bin/` and `skills/diagram-authoring/licenses/`. Commit those generated files with source or version changes. Repository-based skill installation copies that folder directly; CI rejects generated files that differ from a fresh build. The existing npm executable stays at `dist/cli.mjs`.
+
+Build the uploadable skill ZIP with the standard `zip` tool installed:
+
+```sh
+npm run pack:skill
+```
+
+The result is `dist/better-diagrams-skill.zip`. It contains one `diagram-authoring/` folder with instructions, the CLI, viewer, editor, references, starter, and dependency licenses. Only Git-tracked skill files are included; stage new resources before packaging. Missing tracked runtime files and symbolic links stop the build. It runs with Node.js 22.18 or later and needs no dependency installation. Release CI creates this ZIP from the same files used for the npm tarball and attaches both artifacts to the GitHub release. Version `v0.1.0` retains its earlier packaging; publish these changes under a new version.
 
 ## First publication
 

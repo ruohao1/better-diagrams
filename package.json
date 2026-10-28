@@ -12,6 +12,7 @@
     "check": "tsc --noEmit",
     "test:unit": "node --test test/*.test.ts",
     "build": "node scripts/build.mjs",
+    "pack:skill": "npm run build && node scripts/package-skill.mjs",
     "prepack": "npm run build",
     "test:browser": "playwright test"
   },

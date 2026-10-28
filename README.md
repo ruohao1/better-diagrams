@@ -56,7 +56,24 @@ Routing compares a few layout candidates and simplifies safe architecture detour
 
 ## Use from a coding agent
 
-Install the published CLI:
+Install the complete skill from this repository. The shared installer requires Node.js 22.20 or later:
+
+```sh
+npx skills add ruohao1/better-diagrams --skill diagram-authoring -g
+```
+
+Select your coding agent when prompted. Omit `-g` to install into the current project. Invoke `$diagram-authoring` in your agent. The installed folder includes the CLI, viewer, editor, format reference, starter, and dependency licenses. The agent runs its bundled CLI with Node; a global CLI installation is optional.
+
+For upload-based skill environments, use `better-diagrams-skill.zip` from a release that includes this packaging. The published `v0.1.0` release has the earlier skill layout; the complete bundle is currently an Unreleased change.
+
+Manage installed skills with the shared installer:
+
+```sh
+npx skills check
+npx skills update diagram-authoring
+```
+
+For direct terminal use, install the published CLI:
 
 ```sh
 npm install --global @isqrd/better-diagrams
@@ -75,14 +92,7 @@ better-diagrams update
 
 Update commands return JSON. A check reports the current/latest versions and whether an update is available. Before the first stable publication, it reports `published: false`. An update installs the exact checked version, verifies the result, and reports `updated: true`. Checks use npm's configured registry. The updater requires the current npm global installation and respects its configured prefix. Update checkout, local dependency, npx, and plugin copies through their owning installer. Diagram commands and offline browser artifacts do not check for releases.
 
-Copy the installed skill into a target project's Codex skill directory:
-
-```sh
-mkdir -p /path/to/project/.agents/skills
-cp -R "$(npm root --global)/@isqrd/better-diagrams/skills/diagram-authoring" /path/to/project/.agents/skills/
-```
-
-Invoke `$diagram-authoring` in that project. The skill guides source inspection, purpose/detail choices, authoring, and accurate check/build reporting. It requires the CLI on PATH. A complete plugin bundle also supports invoking its bundled CLI with Node. The root `plugin.json` provides portable plugin metadata; the recorded Codex evaluation uses project-local skill discovery.
+The root `plugin.json` provides portable plugin metadata. Agent installation uses the shared `skills` installer; npm updates apply to the separate npm global CLI installation.
 
 ## Verify changes
 
@@ -95,6 +105,6 @@ npm run test:unit
 npm run test:browser
 ```
 
-The package test installs a local tarball outside the checkout and opens its bundled v1/v2 examples and starter offline. Browser checks cover routing, fixed text, gestures, modal history/focus, editing races, conflicts, customization, real embedded fonts, and full active-view exports. See [the diagram-experience evaluation](evals/diagram-experience.md) for actual host results and limits, and [the original evaluation](evals/diagram-authoring.md) for the earlier v1 workflow.
+The package tests install a local tarball, copy the skill by itself, and extract its ZIP outside the checkout. They check bundled v1/v2 examples, offline exploration, runtime resources, and archive replacement. Building the ZIP requires the standard `zip` tool; its test also uses `unzip`. Browser checks cover routing, fixed text, gestures, modal history/focus, editing races, conflicts, customization, real embedded fonts, and full active-view exports. See [the diagram-experience evaluation](evals/diagram-experience.md) for actual host results and limits, and [the original evaluation](evals/diagram-authoring.md) for the earlier v1 workflow.
 
 Local planning files under `docs/superpowers/` are preserved and excluded from Git.

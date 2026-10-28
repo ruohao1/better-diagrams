@@ -1,6 +1,6 @@
 import { build } from 'esbuild';
 import { existsSync } from 'node:fs';
-import {mkdir,copyFile} from 'node:fs/promises';
+import {mkdir,copyFile,cp} from 'node:fs/promises';
 
 await mkdir('dist/licenses',{recursive:true});
 await copyFile('node_modules/elkjs/LICENSE.md','dist/licenses/elkjs-LICENSE.md');
@@ -15,3 +15,7 @@ for (const name of ['viewer', 'editor']) {
   if (existsSync(entry)) await build({ ...common, entryPoints: [entry], outfile: 'dist/' + name + '.js', format: 'iife', platform: 'browser', minify: true });
 }
 if (existsSync('src/cli.ts')) await build({ ...common, entryPoints: ['src/cli.ts'], outfile: 'dist/cli.mjs', format: 'esm', platform: 'node', target: 'node22', banner: { js: '#!/usr/bin/env node' } });
+
+await mkdir('skills/diagram-authoring/bin',{recursive:true});
+for(const name of ['cli.mjs','viewer.js','editor.js'])await copyFile('dist/'+name,'skills/diagram-authoring/bin/'+name);
+await cp('dist/licenses','skills/diagram-authoring/licenses',{recursive:true});
