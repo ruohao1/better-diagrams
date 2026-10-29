@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -27,5 +27,25 @@ test('CLI checks source and builds a self-contained artifact', async () => {
     assert.ifError(invalid.error);
     assert.equal(invalid.status,1);
     assert.equal(JSON.parse(invalid.stderr).ok,false);
+  } finally {await rm(dir,{recursive:true,force:true});}
+});
+
+test('CLI reports endpoint repair hints without changing source or writing an artifact', async () => {
+  const dir=await mkdtemp(join(tmpdir(),'diagram-cli-invalid-'));
+  try {
+    const document=JSON.parse(await readFile('skills/diagram-authoring/assets/minimal-diagram.json','utf8'));
+    document.nodes.worker={label:'Worker',summary:'Sends notifications.',details:''};
+    document.views.overview.edges[0].target='worker';
+    const source=JSON.stringify(document),path=join(dir,'diagram.json'),out=join(dir,'diagram.html');
+    await writeFile(path,source);
+    for(const args of [['check',dir],['build',dir,'--out',out]]){
+      const result=spawnSync(process.execPath,['dist/cli.mjs',...args],{encoding:'utf8'});
+      assert.ifError(result.error);assert.equal(result.status,1);assert.equal(result.stdout,'');
+      const error=JSON.parse(result.stderr);assert.equal(error.ok,false);
+      assert.match(error.error,/overview.*save.*target.*worker/);
+      assert.match(error.error,/not in this view.*views.overview.nodeIds/);
+    }
+    assert.equal(await readFile(path,'utf8'),source);
+    await assert.rejects(readFile(out),{code:'ENOENT'});
   } finally {await rm(dir,{recursive:true,force:true});}
 });

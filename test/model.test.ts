@@ -12,11 +12,6 @@ test('accepts install flow with a shared node and internal view', () => {
   assert.equal(parseDocument(fixture).views.overview.nodeIds.length, 7);
 });
 
-test('rejects missing edge endpoints', () => {
-  const input = copy(); input.views.overview.edges[0].target = 'missing';
-  assert.throws(() => parseDocument(input), /missing/i);
-});
-
 test('rejects duplicate membership in nodes and groups', () => {
   const input = copy(); input.views.overview.nodeIds.push('select');
   assert.throws(() => parseDocument(input), /duplicate/i);
@@ -71,6 +66,58 @@ test('preserves custom data and script-shaped text as plain source data', () => 
 
 const architecture = () => JSON.parse(readFileSync('examples/architecture-small/diagram.json', 'utf8'));
 const flowchart = () => JSON.parse(readFileSync('examples/order-flow/diagram.json', 'utf8'));
+
+for (const [family, create] of [['v1', copy], ['architecture', architecture], ['flowchart', flowchart]] as const) {
+  for (const side of ['source', 'target'] as const) {
+    for (const defined of [false, true]) {
+      test(`${family}: identifies ${defined ? 'unselected' : 'undefined'} ${side} nodes and explains the repair`, () => {
+        const input = create(), viewId = input.rootViewId, view = input.views[viewId];
+        if (family === 'flowchart') view.mainPath = [];
+        const node = { label: 'Worker', details: '', ...(input.version === 2 ? { summary: '' } : {}) };
+        if (defined) input.nodes.worker = node;
+        const edge = view.edges[0]; edge[side] = 'worker';
+
+        assert.throws(() => parseDocument(input), error => {
+          assert.ok(error instanceof Error);
+          for (const context of [viewId, edge.id, side, 'worker']) assert.ok(error.message.includes(context), error.message);
+          assert.match(error.message, defined ? /not in this view/ : /not defined/);
+          assert.ok(error.message.includes(`views.${viewId}.nodeIds`), error.message);
+          if (defined) assert.doesNotMatch(error.message, /Define/);
+          else assert.match(error.message, /Define.*nodes/);
+          if (family === 'flowchart') assert.ok(error.message.includes(`views.${viewId}.stepKinds`), error.message);
+          return true;
+        });
+
+        input.nodes.worker = node;
+        view.nodeIds.push('worker');
+        if (family === 'flowchart') view.stepKinds.worker = 'action';
+        assert.doesNotThrow(() => parseDocument(input));
+      });
+    }
+  }
+}
+
+test('reports the source first when both edge endpoints are missing', () => {
+  const input = architecture(), edge = input.views.small.edges[0];
+  edge.source = 'absent-source'; edge.target = 'absent-target';
+  assert.throws(() => parseDocument(input), error => {
+    assert.ok(error instanceof Error);
+    assert.match(error.message, /source.*absent-source/);
+    assert.doesNotMatch(error.message, /absent-target/);
+    return true;
+  });
+});
+
+test('validates both endpoint identifiers before checking node membership', () => {
+  const input = architecture(), edge = input.views.small.edges[0];
+  edge.source = 'absent-source'; edge.target = 'invalid id';
+  assert.throws(() => parseDocument(input), /target.*invalid identifier/);
+});
+
+test('does not treat inherited object properties as defined endpoint nodes', () => {
+  const input = architecture(); input.views.small.edges[0].target = 'constructor';
+  assert.throws(() => parseDocument(input), /constructor.*not defined/);
+});
 
 test('accepts typed views and per-view roles for shared canonical nodes', () => {
   const input = architecture();

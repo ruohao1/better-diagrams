@@ -12,6 +12,7 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 
 ### Fixed
 
+- Invalid edge endpoints now identify the view, edge, endpoint, and node, with repair hints for missing definitions or view membership.
 - Release checks handle npm's OIDC requests before reading update metadata and use the same npm version as publication.
 
 ## [0.1.0]
