@@ -6,12 +6,14 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 
 ### Added
 
+- An offline `window.betterDiagrams.inspect()` API that reports final geometry for every authored view, including hidden views and render failures. The repository's `scripts/visual-check.mjs` collects JSON reports with an artifact digest and explicit pass, failure, or unavailable-browser status.
 - A visual showcase with architecture, internal-view, and flowchart examples, downloadable SVGs, and commands to explore them locally.
 - A self-contained `diagram-authoring` skill with its own CLI, viewer, editor, and dependency licenses. Install it with the shared `skills` installer without a separate global CLI installation.
 - A `pack:skill` command that builds `better-diagrams-skill.zip`, with the ZIP attached alongside the npm tarball in future GitHub releases.
 
 ### Fixed
 
+- Architecture routing can choose fewer bends with at most 15% extra travel while preserving overlap, crossing, obstacle, and label safeguards. Layout candidates are assessed once during selection.
 - Release checks handle npm's OIDC requests before reading update metadata and use the same npm version as publication.
 
 ## [0.1.0]

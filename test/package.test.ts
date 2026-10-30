@@ -34,6 +34,10 @@ test('the skill folder alone builds a working offline viewer outside the checkou
       await page.goto(pathToFileURL(artifact).href);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();
       await page.getByRole('button',{name:'Storage function',exact:true}).click();await page.getByRole('button',{name:'Explore internals'}).click();
       await page.getByRole('dialog').getByRole('button',{name:'Write to Map',exact:true}).waitFor();
+      const report=await page.evaluate(()=>window.betterDiagrams.inspect());
+      assert.equal(report.schemaVersion,1);assert.equal(report.status,'passed');
+      assert.deepEqual(report.views.map(view=>view.viewId),['overview','storage']);
+      assert.equal(report.humanVisualReview,'not-performed');
       assert.deepEqual(requests,[]);assert.deepEqual(errors,[]);
     }finally{await browser.close();}
   }finally{await rm(dir,{recursive:true,force:true});}
