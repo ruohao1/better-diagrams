@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {assessRoutes,compareRoutes,shortenRoutes} from '../src/browser/routing.ts';
+import * as routing from '../src/browser/routing.ts';
 import type {LayoutScene,SceneEdge} from '../src/browser/geometry.ts';
 
 const dense=():LayoutScene=>JSON.parse(readFileSync('test/fixtures/routing/dense-feedback.json','utf8'));
@@ -60,4 +61,25 @@ test('counts labels and headings as obstacles and preserves ranking priorities',
   assert.ok(compareRoutes(base,{...base,length:101,bends:0})<0);
   assert.ok(compareRoutes(base,{...base,bends:6})<0);
   assert.deepEqual(assessRoutes({nodes:[],groups:[],edges:[]}),{overlaps:0,crossings:0,length:0,bends:0});
+});
+
+test('architecture selection trades a bounded amount of travel for fewer bends',()=>{
+  assert.equal(typeof routing.selectArchitectureCandidate,'function');
+  const a:LayoutScene={nodes:[],groups:[],edges:[]},b:LayoutScene={nodes:[],groups:[],edges:[]};
+  const first={scene:a,metrics:{overlaps:0,crossings:0,length:100,bends:6}};
+  assert.equal(routing.selectArchitectureCandidate([first,{scene:b,metrics:{...first.metrics,length:108,bends:2}}]),b);
+  assert.equal(routing.selectArchitectureCandidate([first,{scene:b,metrics:{...first.metrics,length:116,bends:0}}]),a);
+  for(const key of ['overlaps','crossings'] as const)assert.equal(routing.selectArchitectureCandidate([first,{scene:b,metrics:{...first.metrics,[key]:1,length:50,bends:0}}]),a);
+  assert.equal(routing.selectArchitectureCandidate([first,{...first,scene:b}]),a);
+  assert.equal(routing.selectArchitectureCandidate([{scene:a,metrics:assessRoutes(a)},{scene:b,metrics:assessRoutes(b)}]),a);
+});
+
+test('a safe two-turn route can be slightly longer than the original four-turn route',()=>{
+  const scene:LayoutScene=JSON.parse(readFileSync('test/fixtures/routing/bend-tradeoff.json','utf8')),original=structuredClone(scene);
+  const before=assessRoutes(scene),after=shortenRoutes(scene),metrics=assessRoutes(after);
+  assert.equal(before.length,300);assert.equal(before.bends,4);
+  assert.equal(metrics.length,332);assert.equal(metrics.bends,2);assert.equal(metrics.overlaps,0);assert.equal(metrics.crossings,0);
+  assert.deepEqual(scene,original);
+  scene.nodes.push({id:'top-barrier',x:0,y:-40,width:400,height:30});
+  assert.deepEqual(shortenRoutes(scene),scene,'A blocked shortcut must not become a long perimeter route');
 });

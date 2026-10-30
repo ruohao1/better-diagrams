@@ -55,6 +55,16 @@ node skills/diagram-authoring/bin/cli.mjs build examples/architecture-small --ou
 
 Open the HTML directly in a browser. It contains its scripts, styles, templates, logos, and source data and works offline. Choose **Export SVG** for a static diagram. `check` and `build` validate source structure and asset paths. They do not verify browser rendering. A build reports `rendering: "not-verified"`.
 
+For a structured geometry report, open the built HTML and evaluate `await window.betterDiagrams.inspect()` with your browser automation. Inspection compiles every declared view, including hidden views, without changing the open diagram. It reports overlaps and render failures as errors, and crossings, long detours, and small internal route segments as warnings. A passed report can contain warnings. It does not prove visual readability or source accuracy.
+
+From a repository checkout with development dependencies and Chromium available, collect the same report with:
+
+```sh
+node scripts/visual-check.mjs dist/architecture-small.html > dist/architecture-small.report.json
+```
+
+The collector inspects a private snapshot, blocks HTTP(S) requests, and records its artifact SHA-256 and browser version. It exits with `0` for passed checks, `1` for failed checks, or `2` when browser tooling is unavailable. Set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` if Chromium is installed at a custom path. It does not install a browser. This script belongs to the checkout; the self-contained skill uses its host's browser automation. Rebuild edited source before inspecting it: the API describes the immutable standalone artifact, not a live editor draft. Without browser access, rendering remains unverified.
+
 ## Explore and export
 
 Built HTML shows the diagram and an optional legend. Click a node for details and source references. Choose **Explore internals** for a deeper authored view. Both open in one modal with **Back** navigation.

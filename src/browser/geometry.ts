@@ -10,6 +10,12 @@ export type SceneEdge={id:string;source:string;target:string;kind:ConnectionKind
 export type LayoutScene={nodes:SceneNode[];groups:SceneGroup[];edges:SceneEdge[]};
 export type ViewMeasurements={nodes:Record<string,Size>;edgeLabels:Record<string,Size & {lines:string[]}>;groupLabels:Record<string,Size>};
 export type RouteMetrics={overlaps:number;crossings:number;length:number;bends:number};
+export type GeometrySubject={kind:'node'|'edge'|'edge-label'|'group'|'group-header';id:string;index?:number;pathIndex?:number};
+export type GeometryFinding={
+  code:'geometry-overlap'|'edge-crossing'|'route-stretch'|'short-segment';
+  severity:'error'|'warning';subjects:GeometrySubject[];message:string;
+  measured?:number;limit?:number;suggestion:string;
+};
 export type Segment=readonly [Point,Point];
 
 export const inflate=(box:Rect,gap:number):Rect=>({x:box.x-gap,y:box.y-gap,width:box.width+2*gap,height:box.height+2*gap});
