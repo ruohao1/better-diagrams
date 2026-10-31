@@ -8,6 +8,26 @@ import { buildStandaloneHtml } from '../../src/html.ts';
 
 const template='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 100"><defs><linearGradient id="color"><stop offset="0" stop-color="#f1f7ff"/><stop offset="1" stop-color="#dceaff"/></linearGradient><clipPath id="clip"><rect width="240" height="100" rx="20"/></clipPath></defs><rect class="node-body" width="240" height="100" rx="20" fill="url(#color)" clip-path="url(#clip)"/><text class="node-label" x="18" y="43" data-field="label"/><text x="18" y="74" data-field="data.status"/></svg>';
 
+test.describe('search updates',()=>{
+  test.use({projectPath:'examples/architecture-small'});
+  test('rebuilds search after accepted file changes and retains it after an invalid update',async({page,session})=>{
+    await page.goto(session.url);const canvas=page.locator('.bd-root-frame .bd-canvas');await canvas.hover();
+    const open=async()=>canvas.getByRole('button',{name:'Search',exact:true}).click();await open();
+    const query=canvas.getByRole('searchbox',{name:'Search nodes'});await query.fill('orders');
+    await writeFile(join(session.dir,'diagram.json'),'{');await expect(page.locator('.bd-root-frame .bd-editor-bar [role="status"]')).toContainText('JSON');
+    await expect(query).toHaveValue('orders');await expect(canvas.locator('.bd-search-results').getByRole('button',{name:'Order service (orders)',exact:true})).toBeVisible();
+    const next=structuredClone(session.input.document);next.nodes.orders.label='Purchase service';next.views.small.nodeIds=next.views.small.nodeIds.filter(id=>id!=='admin');next.views.small.edges=next.views.small.edges.filter(edge=>edge.source!=='admin');
+    await writeFile(join(session.dir,'diagram.json'),JSON.stringify(next));await expect(canvas.locator('[data-node-id="orders"]')).toHaveAttribute('aria-label','Purchase service');
+    await expect(query).toBeHidden();await open();await query.fill('Order service');await expect(canvas.getByRole('status')).toHaveText('No matching nodes.');
+    await query.fill('admin');await expect(canvas.getByRole('status')).toHaveText('No matching nodes.');
+    await query.fill('Purchase');await query.press('Enter');await page.keyboard.press('Enter');const modal=page.getByRole('dialog');await modal.getByRole('button',{name:'Explore internals'}).click();await modal.locator('.bd-canvas').hover();
+    await modal.getByRole('button',{name:'Search',exact:true}).click();await modal.getByRole('searchbox',{name:'Search nodes'}).fill('stock');
+    delete next.nodes.orders.childViewId;delete next.views.orders;await writeFile(join(session.dir,'diagram.json'),JSON.stringify(next));
+    await expect(modal.getByLabel('Label',{exact:true})).toHaveValue('Purchase service');await expect(modal.getByRole('searchbox',{name:'Search nodes'})).toHaveCount(0);await expect(modal.getByRole('button',{name:'Explore internals'})).toHaveCount(0);
+    await modal.getByRole('button',{name:'Close',exact:true}).click();await open();await query.fill('orders-stock');await expect(canvas.getByRole('status')).toHaveText('No matching nodes.');
+  });
+});
+
 test('instantiates inert SVG components with escaped text and unique local identifiers',async({page,session})=>{
   await page.setContent('<main id="stage"></main>');await page.addScriptTag({path:'dist/test/compiler.js'});
   const input:ProjectInput=structuredClone(session.input);input.templates={service:template};

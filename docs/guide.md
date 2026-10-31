@@ -53,7 +53,7 @@ To create a shareable artifact:
 node skills/diagram-authoring/bin/cli.mjs build examples/architecture-small --out dist/architecture-small.html
 ```
 
-Open the HTML directly in a browser. It contains its scripts, styles, templates, logos, and source data and works offline. Choose **Export SVG** for a static diagram. `check` and `build` validate source structure and asset paths. They do not verify browser rendering. A build reports `rendering: "not-verified"`.
+Open the HTML directly in a browser. It contains its scripts, styles, templates, logos, and source data and works offline. Choose **Export SVG** or **Export PNG** for a static diagram. `check` and `build` validate source structure and asset paths. They do not verify browser rendering. A build reports `rendering: "not-verified"`.
 
 For a structured geometry report, open the built HTML and evaluate `await window.betterDiagrams.inspect()` with your browser automation. Inspection compiles every declared view, including hidden views, without changing the open diagram. It reports overlaps and render failures as errors, and crossings, long detours, and small internal route segments as warnings. A passed report can contain warnings. It does not prove visual readability or source accuracy.
 
@@ -69,7 +69,9 @@ The collector inspects a private snapshot, blocks HTTP(S) requests, and records 
 
 Built HTML shows the diagram and an optional legend. Click a node for details and source references. Choose **Explore internals** for a deeper authored view. Both open in one modal with **Back** navigation.
 
-Hover or focus the diagram for zoom and export controls. Large views start at readable scale. Drag to pan or choose **Fit**. SVG export contains the complete active diagram and optional legend. It excludes controls, modal frames, details, and other views.
+Hover or focus the diagram for controls. On touch screens, tap **Diagram controls**. Large views start at readable scale. Drag to pan or choose **Fit**. **Search** matches names, IDs, summaries, and source paths within the active view. Select a result to reveal and focus its node; press Enter or click the node to open details. Escape closes Search without closing an internal-view modal. Accepted source updates clear the search.
+
+**Export SVG** and **Export PNG** contain the complete active diagram and optional legend, regardless of pan, zoom, or Search. They exclude controls, modal frames, details, and other views. PNG targets twice the SVG resolution, capped at 16,777,216 pixels and 8,192 pixels per edge. Embedded fonts, logos, and styles stay in the image. Browser text antialiasing can differ slightly from the live diagram. Export controls pause during conversion and become available again if it fails.
 
 ## Author a diagram
 
