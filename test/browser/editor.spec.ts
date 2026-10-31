@@ -133,6 +133,20 @@ test('applies a newer source event that arrives during the post-save preview',as
   await expect(page.locator('[data-node-id=receipt]')).toHaveAttribute('aria-label','Source after reply');await expect(page.getByLabel('Label',{exact:true})).toHaveValue('Source after reply');
 });
 
+test('does not download a pending PNG after the editor is destroyed',async({page,session})=>{
+  await page.setContent('<main id="app"></main>');await page.addScriptTag({path:'dist/test/editor.js'});
+  await page.evaluate(async initial=>{
+    const editor=await DiagramEditor.mountEditor(document.getElementById('app')!,{...initial,sequence:1},{subscribe:()=>()=>{},save:async()=>{throw new Error('Unused save');}});
+    const original=HTMLCanvasElement.prototype.toBlob,create=URL.createObjectURL;let downloads=0;
+    URL.createObjectURL=blob=>{downloads++;return create(blob);};Reflect.set(window,'downloadCount',()=>downloads);
+    HTMLCanvasElement.prototype.toBlob=function(callback,type,quality){const canvas=this;Reflect.set(window,'finishPng',()=>{editor.destroy();original.call(canvas,callback,type,quality);});Reflect.set(window,'releasedPng',()=>canvas.width===0);};
+  },session.input);
+  await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Export PNG',exact:true}).click();
+  await expect.poll(()=>page.evaluate(()=>typeof Reflect.get(window,'finishPng'))).toBe('function');await page.evaluate(()=>Reflect.get(window,'finishPng')());
+  await expect(page.locator('.bd-viewer')).toHaveCount(0);await expect.poll(()=>page.evaluate(()=>Reflect.get(window,'releasedPng')())).toBe(true);
+  expect(await page.evaluate(()=>Reflect.get(window,'downloadCount')())).toBe(0);
+});
+
 test('keeps newly opened node fields disabled until a pending save finishes',async({page,session})=>{
   let release!:()=>void;const pending=new Promise<void>(resolve=>{release=resolve;});
   await page.route('**/api/document',async route=>{await pending;await route.continue();});
