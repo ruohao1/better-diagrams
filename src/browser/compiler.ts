@@ -4,19 +4,19 @@ import defaultTheme from './default-theme.css';
 import {scopeId,validateTheme} from './templates.ts';
 import {element,prepareNode,textLines,textMetrics,wrapText} from './nodes.ts';
 import {layoutCandidates} from './layout.ts';
-import {assessRoutes,compareRoutes,shortenRoutes} from './routing.ts';
-import type {Rect,ViewMeasurements} from './geometry.ts';
+import {assessRoutes,compareRoutes,selectArchitectureCandidate,shortenRoutes} from './routing.ts';
+import type {GeometryFinding,Rect,RouteMetrics,ViewMeasurements} from './geometry.ts';
 import {applyFonts,installFonts} from './fonts.ts';
 
 export type Bounds=Rect;
-export type CompiledView={viewId:string;svg:SVGSVGElement;bounds:Bounds};
+export type CompiledView={viewId:string;svg:SVGSVGElement;bounds:Bounds;inspection?:{metrics:RouteMetrics;findings:GeometryFinding[]}};
 let instance=0;
 const connections:Record<ConnectionKind,{name:string;color:string;dash:string}>={
   call:{name:'Call',color:'#687d99',dash:''},data:{name:'Data access',color:'#4e8d80',dash:'3 3'},event:{name:'Event',color:'#9674b7',dash:'8 4'},telemetry:{name:'Telemetry',color:'#9ba6b7',dash:'1 4'},dependency:{name:'Dependency',color:'#7e8496',dash:'4 4'},
   next:{name:'Next step',color:'#5c7395',dash:''},branch:{name:'Branch',color:'#b88062',dash:'6 4'},error:{name:'Error',color:'#ba6873',dash:'6 4'},retry:{name:'Retry',color:'#a581b5',dash:'3 4'},jump:{name:'Jump',color:'#8b7ea4',dash:'8 4'},
 };
 
-export async function compileView(input:ProjectInput,viewId:string,host:HTMLElement):Promise<CompiledView> {
+export async function compileView(input:ProjectInput,viewId:string,host:HTMLElement,options:{inspect?:boolean}={}):Promise<CompiledView> {
   const doc=normalizeDocument(input.document),view=doc.views[viewId];
   if(!view)throw new Error('Missing view: '+viewId);validateTheme(input.themeCss);
   const scope='render-'+(++instance),svg=element('svg',{xmlns:'http://www.w3.org/2000/svg',class:'diagram',role:'group','aria-label':view.title,'data-diagram-type':view.type});
@@ -38,9 +38,9 @@ export async function compileView(input:ProjectInput,viewId:string,host:HTMLElem
       const text=element('text',{class:'group-label'});graph.append(text);const metrics=await textMetrics(text);text.textContent=group.label;const box=text.getBBox();
       measurements.groupLabels[group.id]={width:box.width,height:box.height};headingMetrics.set(group.id,metrics);text.remove();
     }
-    const candidates=await layoutCandidates(doc,viewId,measurements);
-    candidates.sort((a,b)=>compareRoutes(assessRoutes(a),assessRoutes(b)));
-    const chosen=candidates[0],layout=view.type==='architecture'?shortenRoutes(chosen):chosen;
+    const candidates=(await layoutCandidates(doc,viewId,measurements)).map(scene=>({scene,metrics:assessRoutes(scene)}));
+    const chosen=view.type==='architecture'?selectArchitectureCandidate(candidates):candidates.sort((a,b)=>compareRoutes(a.metrics,b.metrics))[0].scene;
+    const layout=view.type==='architecture'?shortenRoutes(chosen):chosen;
     const defs=element('defs'),kinds=[...new Set(view.edges.map(e=>e.kind))];svg.prepend(defs);
     for(const kind of kinds){
       const marker=element('marker',{id:scopeId(scope,'arrow',kind),viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:8,markerHeight:8,orient:'auto',markerUnits:'userSpaceOnUse'});
@@ -79,7 +79,9 @@ export async function compileView(input:ProjectInput,viewId:string,host:HTMLElem
     applyFonts(svg);
     const box=scene.getBBox(),bounds={x:box.x-28,y:box.y-28,width:Math.max(120,box.width+56),height:Math.max(96,box.height+56)};
     svg.setAttribute('viewBox',[bounds.x,bounds.y,bounds.width,bounds.height].join(' '));
-    svg.insertBefore(element('rect',{class:'canvas-background',...bounds}),scene);svg.remove();return {viewId,svg,bounds};
+    let inspection:CompiledView['inspection'];
+    if(options.inspect){const findings:GeometryFinding[]=[];inspection={metrics:assessRoutes(layout,finding=>findings.push(finding)),findings};}
+    svg.insertBefore(element('rect',{class:'canvas-background',...bounds}),scene);svg.remove();return {viewId,svg,bounds,...(inspection?{inspection}:{})};
   } finally {measure.remove();}
 }
 

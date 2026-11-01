@@ -87,7 +87,9 @@ Themes style SVG classes such as `.node-body`, `.node-label`, `.node-summary`, `
 
 ## Viewing, editing, and compatibility
 
-Built HTML shows only the diagram, an optional legend, and on-demand controls. Details and internal views use one modal with Back/Close. Large views open at readable scale; pan or choose Fit. Export SVG contains the complete active view and optional legend, regardless of pan/zoom. It excludes details, modal frames, controls, and other views.
+Built HTML shows only the diagram, an optional legend, and on-demand controls. Details and internal views use one modal with Back/Close. Large views open at readable scale; pan, choose Fit, or use Search to find a node by name, ID, summary, or source path in the active view. Selecting a result reveals and focuses the node; Enter/click opens its details. Escape closes Search without closing the modal. Accepted source updates clear Search.
+
+Export SVG and Export PNG contain the complete active view and optional legend, regardless of pan/zoom. They exclude details, modal frames, Search, controls, and other views. PNG preserves embedded fonts, logos, and styles, targets 2× resolution, and caps output at 16,777,216 pixels and 8,192 pixels per edge. Browser text antialiasing can differ slightly. Inspect the actual export before claiming it is verified.
 
 The browser editor changes labels, summaries, details, step kinds, and active-view nodes/connections. Connection kinds/labels can be added or updated. Save, draft download, and conflict recovery remain available inside modals. Removing a flow step/edge keeps the longest surviving contiguous main-path run, with the earliest run winning ties. Views, main paths, references, boundaries, appearance, and asset choices remain file-authored.
 

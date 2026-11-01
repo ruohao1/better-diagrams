@@ -112,6 +112,95 @@ test.describe('touch viewport',()=>{
     const canvas=page.locator('.bd-root-frame .bd-canvas');await expect(canvas.locator('svg.diagram')).toBeVisible();
     const scale=()=>canvas.evaluate(el=>el.clientWidth/el.querySelector('.bd-svg-host')!.shadowRoot!.querySelector('svg')!.viewBox.baseVal.width);
     expect(await scale()).toBeGreaterThanOrEqual(.899);await page.getByRole('button',{name:'Diagram controls',exact:true}).tap();await page.getByRole('button',{name:'Fit',exact:true}).tap();expect(await scale()).toBeLessThan(.9);
+    await page.getByRole('button',{name:'Search',exact:true}).tap();await page.getByRole('searchbox',{name:'Search nodes'}).fill('Order service');await page.getByRole('button',{name:'Order service (orders)',exact:true}).tap();await expect(canvas.locator('[data-node-id="orders"]')).toBeFocused();
     expect(await page.evaluate(()=>document.body.scrollWidth)).toBeLessThanOrEqual(390);await page.screenshot({path:info.outputPath('viewer-touch.png')});
   });
+});
+
+test('searches active-view IDs, labels, summaries and paths as literal text in source order',async({page,artifactFor})=>{
+  const input=await readProject('examples/architecture-small');if(input.document.version!==2)throw new Error('Expected typed source');
+  input.document.nodes.shop.label='Twin';input.document.nodes.admin.label='Twin';
+  input.document.nodes.orders.references=[{path:'src/orders.ts'}];input.document.nodes.events.summary='<script>window.pwned=true</script>';
+  await page.goto(await artifactFor(input));const canvas=page.locator('.bd-root-frame .bd-canvas');await canvas.hover();
+  const search=canvas.getByRole('button',{name:'Search',exact:true});await expect(search).toBeVisible({timeout:2000});await search.click();
+  const query=canvas.getByRole('searchbox',{name:'Search nodes'}),results=canvas.locator('.bd-search-results');await expect(query).toBeFocused();
+  await expect(canvas.getByRole('status')).toContainText('Search nodes by name');
+  for(const [text,labels] of [
+    ['  tWiN  ',['Twin (shop)','Twin (admin)']],['src/ORDERS.ts',['Order service (orders)']],
+    ['VALIDATES REQUESTS',['Order service (orders)']],['<script>',['Event stream (events)']],
+    ['database',['Order database (database)']],['orders-validate',[]],['missing',[]],
+  ] as const){await query.fill(text);await expect(results.getByRole('button')).toHaveText([...labels]);}
+  await expect(canvas.getByRole('status')).toHaveText('No matching nodes.');
+  await query.fill(' ');await expect(results.getByRole('button')).toHaveCount(0);await expect(canvas.getByRole('status')).toContainText('Search nodes by name');
+  expect(await page.evaluate(()=>Reflect.has(window,'pwned'))).toBe(false);
+  await query.press('Escape');await expect(query).toBeHidden();await expect(search).toBeFocused();
+  await search.click();await canvas.locator('svg.diagram').click({position:{x:8,y:8}});await expect(query).toBeHidden();
+});
+
+test('search reveals and focuses nodes without changing scale or exports and keeps internal Escape local',async({page,artifactFor})=>{
+  await page.goto(await artifactFor(await readProject('examples/architecture-small')));const canvas=page.locator('.bd-root-frame .bd-canvas');await canvas.hover();
+  const search=canvas.getByRole('button',{name:'Search',exact:true});await expect(search).toBeVisible({timeout:2000});
+  const download=async()=>{const pending=page.waitForEvent('download');await canvas.getByRole('button',{name:'Export SVG',exact:true}).click();return readFile((await (await pending).path())!,'utf8');};
+  const before=await download();await canvas.focus();await page.keyboard.press('ArrowRight');
+  const width=(await canvas.locator('svg.diagram').getAttribute('viewBox'))!.split(' ')[2];
+  await search.click();const query=canvas.getByRole('searchbox',{name:'Search nodes'});await query.fill('Order service');await query.press('Enter');
+  const node=canvas.locator('[data-node-id="orders"]');await expect(node).toBeFocused();await expect(query).toBeHidden();await expect(page.getByRole('dialog')).toHaveCount(0);
+  expect((await canvas.locator('svg.diagram').getAttribute('viewBox'))!.split(' ')[2]).toBe(width);
+  const bounds=(await node.boundingBox())!,frame=(await canvas.boundingBox())!;
+  expect(Math.abs(bounds.x+bounds.width/2-frame.x-frame.width/2)).toBeLessThan(2);expect(Math.abs(bounds.y+bounds.height/2-frame.y-frame.height/2)).toBeLessThan(2);
+  expect(await download()).toBe(before);await node.focus();await page.keyboard.press('Enter');
+  const modal=page.getByRole('dialog');await modal.getByRole('button',{name:'Explore internals'}).click();const internal=modal.locator('.bd-canvas');await internal.hover();
+  await internal.getByRole('button',{name:'Search',exact:true}).click();const innerQuery=internal.getByRole('searchbox',{name:'Search nodes'});await innerQuery.fill('Storefront');await expect(internal.getByRole('status')).toHaveText('No matching nodes.');
+  await innerQuery.press('Escape');await expect(modal).toBeVisible();await expect(innerQuery).toBeHidden();await expect(internal.getByRole('button',{name:'Search',exact:true})).toBeFocused();
+  await internal.getByRole('button',{name:'Search',exact:true}).click();await innerQuery.press('Shift+Tab');await expect(internal.getByRole('button',{name:'Search',exact:true})).toBeFocused();
+  await page.keyboard.press('Escape');await expect(modal).toBeVisible();await expect(innerQuery).toBeHidden();await expect(internal.getByRole('button',{name:'Search',exact:true})).toBeFocused();
+  await internal.getByRole('button',{name:'Search',exact:true}).click();await innerQuery.fill('Stock client');await innerQuery.press('Tab');
+  await expect(internal.getByRole('button',{name:'Stock client (orders-stock)',exact:true})).toBeFocused();await page.keyboard.press('Space');
+  await expect(internal.locator('[data-node-id="orders-stock"]')).toBeFocused();await page.keyboard.press('Enter');await expect(modal.getByRole('heading',{name:'Stock client'})).toBeVisible();
+  await modal.getByRole('button',{name:'Back',exact:true}).click();await expect(modal.locator('.bd-canvas')).toBeVisible();
+  await page.keyboard.press('Escape');await expect(modal).toBeHidden();await expect(node).toBeFocused();
+});
+
+test('search fits a large target into a narrow viewport without horizontal overflow',async({page,artifactFor})=>{
+  await page.setViewportSize({width:390,height:740});await page.goto(await artifactFor(await readProject('examples/architecture-small')));
+  const canvas=page.locator('.bd-root-frame .bd-canvas');await canvas.hover();await expect(canvas.getByRole('button',{name:'Search',exact:true})).toBeVisible({timeout:2000});
+  for(let i=0;i<7;i++)await canvas.getByRole('button',{name:'Zoom in',exact:true}).click();
+  await canvas.getByRole('button',{name:'Search',exact:true}).click();const query=canvas.getByRole('searchbox',{name:'Search nodes'});await query.fill('Event stream');
+  const popup=(await canvas.locator('.bd-search').boundingBox())!;expect(popup.x).toBeGreaterThanOrEqual(0);expect(popup.x+popup.width).toBeLessThanOrEqual(390);
+  await query.press('Enter');const node=(await canvas.locator('[data-node-id="events"]').boundingBox())!,frame=(await canvas.boundingBox())!;
+  expect(node.x).toBeGreaterThanOrEqual(frame.x);expect(node.x+node.width).toBeLessThanOrEqual(frame.x+frame.width);expect(node.y).toBeGreaterThanOrEqual(frame.y);expect(node.y+node.height).toBeLessThanOrEqual(frame.y+frame.height);
+  expect(await page.evaluate(()=>document.body.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+test('exports offline PNG with full active-view bounds, independent of camera and Search',async({page,context,artifactFor},info)=>{
+  const requests:string[]=[],errors:string[]=[];page.on('request',r=>{if(/^https?:/.test(r.url()))requests.push(r.url());});page.on('pageerror',e=>errors.push(String(e)));await context.setOffline(true);
+  await page.goto(await artifactFor(await readProject('examples/architecture-small')));const root=page.locator('.bd-root-frame .bd-canvas');await root.hover();
+  await expect(root.getByRole('button',{name:'Export PNG',exact:true})).toBeVisible({timeout:2000});
+  const download=async(scope:typeof root,format:string)=>{const pending=page.waitForEvent('download');await scope.getByRole('button',{name:'Export '+format,exact:true}).click();const result=await pending;return {name:result.suggestedFilename(),bytes:await readFile((await result.path())!)};};
+  const svg=await download(root,'SVG'),dimensions=svg.bytes.toString().match(/viewBox="([^"]+)"/)![1].split(' ').map(Number);
+  const first=await download(root,'PNG');expect(first.name).toBe('small.png');expect([...first.bytes.subarray(0,8)]).toEqual([137,80,78,71,13,10,26,10]);
+  await writeFile(info.outputPath('architecture.png'),first.bytes);
+  expect(first.bytes.readUInt32BE(16)).toBe(Math.floor(dimensions[2]*2));expect(first.bytes.readUInt32BE(20)).toBe(Math.floor(dimensions[3]*2));
+  await root.getByRole('button',{name:'Zoom in',exact:true}).click();await root.focus();await page.keyboard.press('ArrowRight');await root.getByRole('button',{name:'Search',exact:true}).click();await root.getByRole('searchbox',{name:'Search nodes'}).fill('Order service');
+  await page.screenshot({path:info.outputPath('search.png')});
+  expect((await download(root,'PNG')).bytes.equals(first.bytes)).toBe(true);
+  await root.getByRole('searchbox',{name:'Search nodes'}).press('Enter');await page.keyboard.press('Enter');const modal=page.getByRole('dialog');expect((await download(modal,'PNG')).bytes.equals(first.bytes)).toBe(true);
+  await modal.getByRole('button',{name:'Explore internals'}).click();await modal.locator('.bd-canvas').hover();const internalSvg=await download(modal,'SVG'),internal=await download(modal,'PNG');expect(internal.name).toBe('orders.png');expect(internal.bytes.equals(first.bytes)).toBe(false);
+  expect(internalSvg.bytes.toString()).toContain('data-node-id="orders-stock"');expect(internalSvg.bytes.toString()).not.toContain('data-node-id="shop"');
+  const image=await page.evaluate(async bytes=>{const blob=new Blob([new Uint8Array(bytes)],{type:'image/png'}),bitmap=await createImageBitmap(blob),result={width:bitmap.width,height:bitmap.height};bitmap.close();return result;},[...internal.bytes]);
+  expect(image.width).toBe(internal.bytes.readUInt32BE(16));expect(image.height).toBe(internal.bytes.readUInt32BE(20));expect(requests).toEqual([]);expect(errors).toEqual([]);
+});
+
+test('disables duplicate exports, reports PNG failures, and restores SVG and PNG actions',async({page,artifactFor})=>{
+  await page.goto(await artifactFor(await readProject('examples/architecture-small')));const canvas=page.locator('.bd-root-frame .bd-canvas');await canvas.hover();const png=canvas.getByRole('button',{name:'Export PNG',exact:true}),svg=canvas.getByRole('button',{name:'Export SVG',exact:true});await expect(png).toBeVisible({timeout:2000});
+  await page.evaluate(()=>{
+    const original=HTMLCanvasElement.prototype.toBlob;
+    HTMLCanvasElement.prototype.toBlob=function(callback){Reflect.set(window,'finishPng',()=>{HTMLCanvasElement.prototype.toBlob=original;callback(null);});};
+    const create=URL.createObjectURL,revoke=URL.revokeObjectURL,urls=new Set<string>();URL.createObjectURL=blob=>{const url=create(blob);urls.add(url);return url;};URL.revokeObjectURL=url=>{urls.delete(url);revoke(url);};Reflect.set(window,'pendingUrls',()=>urls.size);
+  });
+  await png.click();await expect(png).toBeDisabled();await expect(svg).toBeDisabled();await expect.poll(()=>page.evaluate(()=>typeof Reflect.get(window,'finishPng'))).toBe('function');
+  await page.evaluate(()=>Reflect.get(window,'finishPng')());await expect(page.getByRole('alert')).toBeVisible();await expect(png).toBeEnabled();await expect(svg).toBeEnabled();
+  const pending=page.waitForEvent('download');await png.click();expect((await pending).suggestedFilename()).toBe('small.png');await expect(page.getByRole('alert')).toBeHidden();await expect(png).toBeEnabled();
+  const next=page.waitForEvent('download');await svg.click();expect((await next).suggestedFilename()).toBe('small.svg');
+  await expect.poll(()=>page.evaluate(()=>Reflect.get(window,'pendingUrls')())).toBe(0);
 });

@@ -147,3 +147,24 @@ test('shortens the dense connection and exports all measured content',async({pag
   expect(assessRoutes(result.scene).overlaps).toBe(0);
   await page.screenshot({path:info.outputPath('architecture-dense.png')});
 });
+
+test('inspects the final shortened geometry only when requested',async({page})=>{
+  const input=await readProject('examples/architecture-dense');
+  const result=await page.evaluate(async input=>{
+    const host=document.getElementById('stage')!;
+    const ordinary=await DiagramCompiler.compileView(input,'dense',host);
+    const inspected=await DiagramCompiler.compileView(input,'dense',host,{inspect:true});
+    let length=0,bends=0;
+    for(const path of inspected.svg.querySelectorAll<SVGPathElement>('.edge-path')){
+      const n=path.getAttribute('d')!.match(/-?\d+(?:\.\d+)?/g)!.map(Number);
+      for(let i=2;i<n.length;i+=2)length+=Math.abs(n[i]-n[i-2])+Math.abs(n[i+1]-n[i-1]);
+      bends+=Math.max(0,n.length/2-2);
+    }
+    return {ordinary:ordinary.inspection,inspection:inspected.inspection,length,bends,remaining:host.children.length};
+  },input);
+  expect(result.ordinary).toBeUndefined();expect(result.inspection).toBeDefined();
+  expect(result.inspection!.metrics.length).toBeCloseTo(result.length,5);
+  expect(result.inspection!.metrics.bends).toBe(result.bends);
+  expect(result.inspection!.findings.filter(f=>f.severity==='error')).toEqual([]);
+  expect(result.remaining).toBe(0);
+});
