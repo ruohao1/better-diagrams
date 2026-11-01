@@ -34,6 +34,11 @@ test('the skill folder alone builds a working offline viewer outside the checkou
       await page.goto(pathToFileURL(artifact).href);await page.locator('.bd-root-frame .bd-canvas').hover();await page.getByRole('button',{name:'Fit',exact:true}).click();
       await page.getByRole('button',{name:'Storage function',exact:true}).click();await page.getByRole('button',{name:'Explore internals'}).click();
       await page.getByRole('dialog').getByRole('button',{name:'Write to Map',exact:true}).waitFor();
+      const modal=page.getByRole('dialog');await modal.locator('.bd-canvas').hover();await modal.getByRole('button',{name:'Search',exact:true}).click();
+      const query=modal.getByRole('searchbox',{name:'Search nodes'});await query.fill('Write to Map');await query.press('Enter');
+      assert.equal(await modal.getByRole('button',{name:'Write to Map',exact:true}).evaluate(el=>el.getRootNode() instanceof ShadowRoot && (el.getRootNode() as ShadowRoot).activeElement===el),true);
+      const pending=page.waitForEvent('download');await modal.getByRole('button',{name:'Export PNG',exact:true}).click();const png=await pending,bytes=await readFile((await png.path())!);
+      assert.equal(png.suggestedFilename(),'storage.png');assert.deepEqual([...bytes.subarray(0,8)],[137,80,78,71,13,10,26,10]);
       const report=await page.evaluate(()=>window.betterDiagrams.inspect());
       assert.equal(report.schemaVersion,1);assert.equal(report.status,'passed');
       assert.deepEqual(report.views.map(view=>view.viewId),['overview','storage']);
