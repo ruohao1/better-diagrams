@@ -16,7 +16,7 @@ For example, ask your agent:
 
 > Use diagram-authoring to map this repository's services for a new contributor. Keep the overview to the main components. Put code references in node details and deeper structure in internal views.
 
-For upload-based skill environments, use `better-diagrams-skill.zip` from a release that includes this packaging. The published `v0.1.0` release has the earlier skill layout. The complete bundle is currently an Unreleased change, available through the repository installer above.
+For upload-based skill environments, download `better-diagrams-skill.zip` from a [GitHub release](https://github.com/ruohao1/better-diagrams/releases) that includes it. The complete bundle starts with `v0.2.0`; `v0.1.0` has the earlier layout. Repository installation uses the complete bundle.
 
 Manage installed skills with the shared installer:
 

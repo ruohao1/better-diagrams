@@ -14,11 +14,11 @@ npm run check
 npm run build
 npm run test:unit
 npm run test:browser
-node scripts/release.mjs notes v0.1.0
+node scripts/release.mjs notes v0.2.0
 npm publish --dry-run --access public
 ```
 
-Replace `v0.1.0` with the prepared version. Packing rebuilds the CLI and browser bundles. The tarball includes examples, the complete skill, the changelog, and bundled dependency licenses. It excludes tests, source trees, plans, and prototypes.
+Replace `v0.2.0` with the prepared version. Packing rebuilds the CLI and browser bundles. The tarball includes examples, the complete skill, the changelog, and bundled dependency licenses. It excludes tests, source trees, plans, and prototypes.
 
 The build also updates `skills/diagram-authoring/bin/` and `skills/diagram-authoring/licenses/`. Commit those generated files with source or version changes. Repository-based skill installation copies that folder directly; CI rejects generated files that differ from a fresh build. The existing npm executable stays at `dist/cli.mjs`.
 
