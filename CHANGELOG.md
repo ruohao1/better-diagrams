@@ -14,6 +14,7 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 
 ### Fixed
 
+- Invalid edge endpoints now identify the view, edge, endpoint, and node, with repair hints for missing definitions or view membership.
 - Architecture routing can choose fewer bends with at most 15% extra travel while preserving overlap, crossing, obstacle, and label safeguards. Layout candidates are assessed once during selection.
 - Release checks handle npm's OIDC requests before reading update metadata and use the same npm version as publication.
 

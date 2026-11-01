@@ -173,7 +173,13 @@ export function parseDocument(value: unknown): DiagramDocument {
       id(edge.id, viewId + '.edge.id');
       requireValue(!edgeIds.has(edge.id), viewId, 'duplicate edge identifier'); edgeIds.add(edge.id);
       id(edge.source, 'edge.source'); id(edge.target, 'edge.target');
-      requireValue(selected.has(edge.source) && selected.has(edge.target), viewId, 'missing edge endpoint');
+      for (const [side, nodeId] of [['source', edge.source], ['target', edge.target]]) {
+        const defined = nodeIds.has(nodeId);
+        const action = defined ? 'Add it to ' : 'Define it in nodes, then add it to ';
+        const membership = `views.${viewId}.nodeIds` + (flow ? ` and set its role in views.${viewId}.stepKinds` : '');
+        requireValue(selected.has(nodeId), `${viewId}.edge.${edge.id}.${side}`,
+          `node "${nodeId}" is ${defined ? 'not in this view' : 'not defined'}. ${action}${membership}, or correct the ${side} ID.`);
+      }
       if (edge.label !== undefined) text(edge.label, 'edge.label');
       if (typed) {
         requireValue(typeof edge.kind === 'string' && (flow ? ['next','branch','error','retry','jump'] : ['call','data','event','telemetry','dependency']).includes(edge.kind), viewId, 'unknown connection kind');
