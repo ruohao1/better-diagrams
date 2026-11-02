@@ -4,13 +4,15 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 
 ## Unreleased
 
+## [0.2.0]
+
 ### Added
 
 - Active-view Search finds nodes by name, ID, summary, or source path and reveals them without opening details. PNG export captures the full active diagram and optional legend, with bounded image dimensions and offline fonts and logos.
 - An offline `window.betterDiagrams.inspect()` API that reports final geometry for every authored view, including hidden views and render failures. The repository's `scripts/visual-check.mjs` collects JSON reports with an artifact digest and explicit pass, failure, or unavailable-browser status.
 - A visual showcase with architecture, internal-view, and flowchart examples, downloadable SVGs, and commands to explore them locally.
 - A self-contained `diagram-authoring` skill with its own CLI, viewer, editor, and dependency licenses. Install it with the shared `skills` installer without a separate global CLI installation.
-- A `pack:skill` command that builds `better-diagrams-skill.zip`, with the ZIP attached alongside the npm tarball in future GitHub releases.
+- Release packages include `better-diagrams-skill.zip` alongside the npm tarball; `pack:skill` builds the self-contained skill archive.
 
 ### Fixed
 

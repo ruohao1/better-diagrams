@@ -1,6 +1,6 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "better-diagrams",
-  "version": "0.1.0",
-  "description": "Interactive software diagrams with automatic layout, browser editing, standalone HTML, and clean SVG export."
+  "version": "0.2.0",
+  "description": "Interactive software diagrams with automatic layout, browser editing, standalone HTML, Search, and clean SVG/PNG export."
 }

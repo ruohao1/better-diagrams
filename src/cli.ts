@@ -12,7 +12,7 @@ export async function runCli(argv: string[]): Promise<number> {
   try {
     const {positionals,values}=parseArgs({args:argv,allowPositionals:true,options:{out:{type:'string'},help:{type:'boolean',short:'h'},version:{type:'boolean',short:'v'},check:{type:'boolean'}}});
     const usage='Usage: better-diagrams check PROJECT | build PROJECT --out FILE.html | dev PROJECT | update [--check] | --version';
-    if(values.help){process.stdout.write('Better Diagrams\n\n  check PROJECT                  Validate source and asset paths\n  build PROJECT --out FILE.html  Create standalone HTML\n  dev PROJECT                    Start the local live editor\n  --version                      Print the installed version\n  update --check                 Check for a newer stable release\n  update                         Update this npm global installation\n\nExport SVG from the browser viewer or editor.\n');return 0;}
+    if(values.help){process.stdout.write('Better Diagrams\n\n  check PROJECT                  Validate source and asset paths\n  build PROJECT --out FILE.html  Create standalone HTML\n  dev PROJECT                    Start the local live editor\n  --version                      Print the installed version\n  update --check                 Check for a newer stable release\n  update                         Update this npm global installation\n\nExport SVG or PNG from the browser viewer or editor.\n');return 0;}
     if(values.version){
       if(positionals.length || values.out!==undefined || values.check)throw new Error(usage);
       process.stdout.write(pkg.version+'\n');return 0;
