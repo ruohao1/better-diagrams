@@ -16,6 +16,6 @@ for (const name of ['viewer', 'editor']) {
 }
 if (existsSync('src/cli.ts')) await build({ ...common, entryPoints: ['src/cli.ts'], outfile: 'dist/cli.mjs', format: 'esm', platform: 'node', target: 'node22', banner: { js: '#!/usr/bin/env node' } });
 
-await mkdir('skills/diagram-authoring/bin',{recursive:true});
-for(const name of ['cli.mjs','viewer.js','editor.js'])await copyFile('dist/'+name,'skills/diagram-authoring/bin/'+name);
-await cp('dist/licenses','skills/diagram-authoring/licenses',{recursive:true});
+await mkdir('skills/create-diagrams/bin',{recursive:true});
+for(const name of ['cli.mjs','viewer.js','editor.js'])await copyFile('dist/'+name,'skills/create-diagrams/bin/'+name);
+await cp('dist/licenses','skills/create-diagrams/licenses',{recursive:true});

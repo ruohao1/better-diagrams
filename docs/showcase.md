@@ -20,7 +20,7 @@ Five components and four connections. Fixed-size cards, a local logo, typed conn
 [SVG](showcase/architecture-small.svg) · [Source](../examples/architecture-small/diagram.json)
 
 ```sh
-node skills/diagram-authoring/bin/cli.mjs dev examples/architecture-small
+node skills/create-diagrams/bin/cli.mjs dev examples/architecture-small
 ```
 
 ### Component internals
@@ -40,7 +40,7 @@ Eighteen components and twenty-three connections across services, stores, worker
 [SVG](showcase/architecture-dense.svg) · [Source](../examples/architecture-dense/diagram.json)
 
 ```sh
-node skills/diagram-authoring/bin/cli.mjs dev examples/architecture-dense
+node skills/create-diagrams/bin/cli.mjs dev examples/architecture-dense
 ```
 
 ## Flowchart
@@ -52,7 +52,7 @@ Eight steps and eight connections. An order moves through stock and payment deci
 [SVG](showcase/order-flow.svg) · [Source](../examples/order-flow/diagram.json)
 
 ```sh
-node skills/diagram-authoring/bin/cli.mjs dev examples/order-flow
+node skills/create-diagrams/bin/cli.mjs dev examples/order-flow
 ```
 
 ## Share a diagram
@@ -60,9 +60,9 @@ node skills/diagram-authoring/bin/cli.mjs dev examples/order-flow
 Build an HTML file that contains its source, scripts, styles, templates, and logos. Open it directly in a browser, including offline:
 
 ```sh
-node skills/diagram-authoring/bin/cli.mjs build examples/architecture-small --out dist/architecture-small.html
+node skills/create-diagrams/bin/cli.mjs build examples/architecture-small --out dist/architecture-small.html
 ```
 
 Built HTML shows the diagram and optional legend. Details and internal views open on demand. SVG export includes the complete active view, without controls or modal frames.
 
-For editing, customization, and validation limits, see the [usage guide](guide.md) and [source format](../skills/diagram-authoring/references/source-format.md).
+For editing, customization, and validation limits, see the [usage guide](guide.md) and [source format](../skills/create-diagrams/references/source-format.md).

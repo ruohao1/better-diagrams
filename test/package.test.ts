@@ -12,15 +12,15 @@ import { parseDocument } from '../src/model.ts';
 test('plugin identity matches the package and its skill example is valid',async()=>{
   const plugin=JSON.parse(await readFile('plugin.json','utf8')),pkg=JSON.parse(await readFile('package.json','utf8'));
   assert.equal(plugin.name,pkg.name.split('/').at(-1));assert.equal(plugin.version,pkg.version);
-  const skill=await readFile('skills/diagram-authoring/SKILL.md','utf8');assert.match(skill,/^---\nname: diagram-authoring\n/);
-  parseDocument(JSON.parse(await readFile('skills/diagram-authoring/assets/minimal-diagram.json','utf8')));
+  const skill=await readFile('skills/create-diagrams/SKILL.md','utf8');assert.match(skill,/^---\nname: create-diagrams\n/);
+  parseDocument(JSON.parse(await readFile('skills/create-diagrams/assets/minimal-diagram.json','utf8')));
 });
 
 test('the skill folder alone builds a working offline viewer outside the checkout',async()=>{
   const dir=await mkdtemp(join(tmpdir(),'diagram skill '));
   try {
-    const skill=join(dir,'diagram-authoring'),project=join(dir,'project'),artifact=join(dir,'diagram.html');
-    await cp('skills/diagram-authoring',skill,{recursive:true});await mkdir(project);
+    const skill=join(dir,'create-diagrams'),project=join(dir,'project'),artifact=join(dir,'diagram.html');
+    await cp('skills/create-diagrams',skill,{recursive:true});await mkdir(project);
     await copyFile(join(skill,'assets/minimal-diagram.json'),join(project,'diagram.json'));
     const cli=join(skill,'bin/cli.mjs');
     const run=(args:string[])=>{const result=spawnSync(process.execPath,[cli,...args],{cwd:project,encoding:'utf8',timeout:10_000,env:{...process.env,npm_config_registry:'http://127.0.0.1:1'}});assert.ifError(result.error);assert.equal(result.status,0,result.stderr);return result;};
@@ -54,10 +54,11 @@ test('packed CLI installs offline outside the checkout and builds a working offl
   try {
     const packed=run('npm',['pack','--json','--pack-destination',dir],process.cwd());
     const meta=Object.values(JSON.parse(packed.stdout))[0] as {filename:string;files:{path:string}[]};const files=meta.files.map(file=>file.path);
-    for(const path of ['dist/cli.mjs','dist/viewer.js','dist/editor.js','dist/licenses/elkjs-LICENSE.md','dist/licenses/semver-LICENSE','plugin.json','CHANGELOG.md','skills/diagram-authoring/SKILL.md','skills/diagram-authoring/bin/cli.mjs','skills/diagram-authoring/bin/viewer.js','skills/diagram-authoring/bin/editor.js','skills/diagram-authoring/licenses/elkjs-LICENSE.md','skills/diagram-authoring/licenses/semver-LICENSE'])assert.ok(files.includes(path),path);
+    for(const path of ['dist/cli.mjs','dist/viewer.js','dist/editor.js','dist/licenses/elkjs-LICENSE.md','dist/licenses/semver-LICENSE','plugin.json','CHANGELOG.md','skills/create-diagrams/SKILL.md','skills/create-diagrams/bin/cli.mjs','skills/create-diagrams/bin/viewer.js','skills/create-diagrams/bin/editor.js','skills/create-diagrams/licenses/elkjs-LICENSE.md','skills/create-diagrams/licenses/semver-LICENSE'])assert.ok(files.includes(path),path);
+    assert.ok(!files.some(path=>path.startsWith('skills/diagram-authoring/')),'The package must not install the old skill name');
     assert.ok(!files.some(path=>path.startsWith('dist/test/')||path.startsWith('docs/')||path.startsWith('src/')||path.startsWith('test/')||path.startsWith('node_modules/')||path.includes('.prototype.')));
     const prefix=join(dir,'prefix');run('npm',['install','--global','--prefix',prefix,'--ignore-scripts','--offline',join(dir,meta.filename)]);
-    const binary=join(prefix,'bin/better-diagrams'),installed=join(prefix,'lib/node_modules/@isqrd/better-diagrams'),starter=join(dir,'starter');await mkdir(starter);await copyFile(join(installed,'skills/diagram-authoring/assets/minimal-diagram.json'),join(starter,'diagram.json'));
+    const binary=join(prefix,'bin/better-diagrams'),installed=join(prefix,'lib/node_modules/@isqrd/better-diagrams'),starter=join(dir,'starter');await mkdir(starter);await copyFile(join(installed,'skills/create-diagrams/assets/minimal-diagram.json'),join(starter,'diagram.json'));
     assert.equal(run(binary,['--version']).stdout,JSON.parse(await readFile(join(installed,'package.json'),'utf8')).version+'\n');
     const browser=await chromium.launch({headless:true,executablePath:existsSync('/usr/bin/google-chrome')?'/usr/bin/google-chrome':undefined,args:['--no-sandbox']});
     try {
@@ -88,26 +89,26 @@ test('the skill ZIP replaces older contents and runs after extraction',async()=>
   const dir=await mkdtemp(join(tmpdir(),'diagram-skill-zip-')),archive=join(dir,'dist/better-diagrams-skill.zip'),script=resolve('scripts/package-skill.mjs');
   const run=(command:string,args:string[],cwd=dir)=>{const result=spawnSync(command,args,{cwd,encoding:'utf8',timeout:30_000});assert.ifError(result.error);assert.equal(result.status,0,result.stderr);return result;};
   try {
-    await cp('skills/diagram-authoring',join(dir,'skills/diagram-authoring'),{recursive:true});
+    await cp('skills/create-diagrams',join(dir,'skills/create-diagrams'),{recursive:true});
     run('git',['init','--quiet']);run('git',['add','skills']);
-    await writeFile(join(dir,'skills/diagram-authoring/private-local.txt'),'Untracked local files must not be distributed.');
+    await writeFile(join(dir,'skills/create-diagrams/private-local.txt'),'Untracked local files must not be distributed.');
     await mkdir(join(dir,'dist'));
     await writeFile(join(dir,'stale.txt'),'This file must not survive archive replacement.');run('zip',['-q',archive,'stale.txt']);
     run(process.execPath,[script]);
     const entries=run('unzip',['-Z1',archive]).stdout.trim().split('\n');
-    for(const path of ['SKILL.md','bin/cli.mjs','bin/viewer.js','bin/editor.js','licenses/elkjs-LICENSE.md','licenses/semver-LICENSE','references/source-format.md','assets/minimal-diagram.json'])assert.ok(entries.includes('diagram-authoring/'+path),path);
-    assert.ok(entries.every(path=>path.startsWith('diagram-authoring/')));assert.ok(!entries.some(path=>/node_modules|(^|\/)src\/|(^|\/)test\/|stale\.txt|private-local\.txt/.test(path)));
+    for(const path of ['SKILL.md','bin/cli.mjs','bin/viewer.js','bin/editor.js','licenses/elkjs-LICENSE.md','licenses/semver-LICENSE','references/source-format.md','assets/minimal-diagram.json'])assert.ok(entries.includes('create-diagrams/'+path),path);
+    assert.ok(entries.every(path=>path.startsWith('create-diagrams/')));assert.ok(!entries.some(path=>/node_modules|(^|\/)src\/|(^|\/)test\/|stale\.txt|private-local\.txt/.test(path)));
     run('unzip',['-q',archive,'-d',dir]);
-    const skill=join(dir,'diagram-authoring'),cli=join(skill,'bin/cli.mjs'),project=join(dir,'project');await mkdir(project);await copyFile(join(skill,'assets/minimal-diagram.json'),join(project,'diagram.json'));
+    const skill=join(dir,'create-diagrams'),cli=join(skill,'bin/cli.mjs'),project=join(dir,'project');await mkdir(project);await copyFile(join(skill,'assets/minimal-diagram.json'),join(project,'diagram.json'));
     assert.equal(run(process.execPath,[cli,'--version']).stdout,JSON.parse(await readFile('package.json','utf8')).version+'\n');
     assert.equal(JSON.parse(run(process.execPath,[cli,'check',project]).stdout).ok,true);
     assert.equal(JSON.parse(run(process.execPath,[cli,'build',project,'--out',join(dir,'diagram.html')]).stdout).ok,true);
-    run('git',['rm','--cached','--quiet','skills/diagram-authoring/bin/editor.js']);
-    const incomplete=spawnSync(process.execPath,[script],{cwd:dir,encoding:'utf8'});assert.notEqual(incomplete.status,0);assert.match(incomplete.stderr,/complete skill runtime/);run('git',['add','skills/diagram-authoring/bin/editor.js']);
-    const sourceSkill=join(dir,'skills/diagram-authoring/SKILL.md');await rm(sourceSkill);await symlink(join(dir,'stale.txt'),sourceSkill);
+    run('git',['rm','--cached','--quiet','skills/create-diagrams/bin/editor.js']);
+    const incomplete=spawnSync(process.execPath,[script],{cwd:dir,encoding:'utf8'});assert.notEqual(incomplete.status,0);assert.match(incomplete.stderr,/complete skill runtime/);run('git',['add','skills/create-diagrams/bin/editor.js']);
+    const sourceSkill=join(dir,'skills/create-diagrams/SKILL.md');await rm(sourceSkill);await symlink(join(dir,'stale.txt'),sourceSkill);
     const rejected=spawnSync(process.execPath,[script],{cwd:dir,encoding:'utf8'});assert.notEqual(rejected.status,0);assert.match(rejected.stderr,/regular file/);
-    await rm(sourceSkill);await copyFile('skills/diagram-authoring/SKILL.md',sourceSkill);
-    const outside=join(dir,'outside-assets');await cp(join(dir,'skills/diagram-authoring/assets'),outside,{recursive:true});await rm(join(dir,'skills/diagram-authoring/assets'),{recursive:true});await symlink(outside,join(dir,'skills/diagram-authoring/assets'),'dir');
+    await rm(sourceSkill);await copyFile('skills/create-diagrams/SKILL.md',sourceSkill);
+    const outside=join(dir,'outside-assets');await cp(join(dir,'skills/create-diagrams/assets'),outside,{recursive:true});await rm(join(dir,'skills/create-diagrams/assets'),{recursive:true});await symlink(outside,join(dir,'skills/create-diagrams/assets'),'dir');
     const ancestor=spawnSync(process.execPath,[script],{cwd:dir,encoding:'utf8'});assert.notEqual(ancestor.status,0);assert.match(ancestor.stderr,/symbolic link/);
   }finally{await rm(dir,{recursive:true,force:true});}
 });
