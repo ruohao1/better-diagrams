@@ -27,8 +27,8 @@ jobs:
       - run: npm run build
       - name: Check generated skill runtime
         run: |
-          git diff --exit-code --stat -- skills/diagram-authoring/bin skills/diagram-authoring/licenses
-          test -z "$(git ls-files --others --exclude-standard -- skills/diagram-authoring/bin skills/diagram-authoring/licenses)"
+          git diff --exit-code --stat -- skills/create-diagrams/bin skills/create-diagrams/licenses
+          test -z "$(git ls-files --others --exclude-standard -- skills/create-diagrams/bin skills/create-diagrams/licenses)"
       - run: npm run test:unit
       - run: npm run test:browser
       - name: Prepare release notes and repository metadata

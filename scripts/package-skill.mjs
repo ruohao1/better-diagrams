@@ -4,9 +4,9 @@ import {mkdir,rm,lstat} from 'node:fs/promises';
 import {resolve} from 'node:path';
 
 const archive=resolve('dist/better-diagrams-skill.zip');
-const execute=promisify(execFile),{stdout}=await execute('git',['ls-files','-z','--','skills/diagram-authoring']);
+const execute=promisify(execFile),{stdout}=await execute('git',['ls-files','-z','--','skills/create-diagrams']);
 const paths=stdout.split('\0').filter(Boolean),files=paths.map(path=>path.slice('skills/'.length));
-for(const name of ['cli.mjs','viewer.js','editor.js'])if(!files.includes('diagram-authoring/bin/'+name))throw new Error('Build and track the complete skill runtime before packaging.');
+for(const name of ['cli.mjs','viewer.js','editor.js'])if(!files.includes('create-diagrams/bin/'+name))throw new Error('Build and track the complete skill runtime before packaging.');
 for(const path of paths){
   const parts=path.split('/');
   for(let end=1;end<parts.length;end++){

@@ -7,22 +7,24 @@ Better Diagrams is a local compiler, browser editor, and coding-agent skill for 
 The shared installer requires Node.js 22.20 or later:
 
 ```sh
-npx skills add ruohao1/better-diagrams --skill diagram-authoring -g
+npx skills add ruohao1/better-diagrams --skill create-diagrams -g
 ```
 
-Select your coding agent when prompted, then ask it to use `diagram-authoring`. Omit `-g` to install into the current project. The installed folder includes the CLI, viewer, editor, format reference, starter, and dependency licenses. The agent runs its bundled CLI with Node.js 22.18 or later. A global CLI installation is optional.
+Select your coding agent when prompted, then ask it to use `create-diagrams`. Omit `-g` to install into the current project. The installed folder includes the CLI, viewer, editor, format reference, starter, and dependency licenses. The agent runs its bundled CLI with Node.js 22.18 or later. A global CLI installation is optional.
+
+Existing `diagram-authoring` copies continue to work. Install `create-diagrams` for every agent that uses the old skill in the same scope, then verify each. Once all have migrated, remove the old shared skill with `npx skills remove diagram-authoring -g`. For a project installation, omit `-g` from both commands. The rename does not migrate existing installations automatically.
 
 For example, ask your agent:
 
-> Use diagram-authoring to map this repository's services for a new contributor. Keep the overview to the main components. Put code references in node details and deeper structure in internal views.
+> Use create-diagrams to map this repository's services for a new contributor. Keep the overview to the main components. Put code references in node details and deeper structure in internal views.
 
-For upload-based skill environments, download `better-diagrams-skill.zip` from a [GitHub release](https://github.com/ruohao1/better-diagrams/releases) that includes it. The complete bundle starts with `v0.2.0`; `v0.1.0` has the earlier layout. Repository installation uses the complete bundle.
+For upload-based skill environments, download `better-diagrams-skill.zip` from a [GitHub release](https://github.com/ruohao1/better-diagrams/releases) that includes it. The published `v0.2.0` ZIP contains `diagram-authoring/`; `v0.1.0` has the earlier layout. The `create-diagrams/` archive layout is unreleased. Repository installation uses `create-diagrams`.
 
 Manage installed skills with the shared installer:
 
 ```sh
 npx skills check
-npx skills update diagram-authoring
+npx skills update create-diagrams
 ```
 
 The root `plugin.json` provides portable plugin metadata. Agent installation uses the shared `skills` installer. npm updates apply to the separate npm global CLI installation.
@@ -43,14 +45,14 @@ The example paths assume a repository checkout. For your own diagram, replace th
 From a checkout, you can instead run the committed skill bundle without installing dependencies:
 
 ```sh
-node skills/diagram-authoring/bin/cli.mjs check examples/architecture-small
-node skills/diagram-authoring/bin/cli.mjs dev examples/architecture-small
+node skills/create-diagrams/bin/cli.mjs check examples/architecture-small
+node skills/create-diagrams/bin/cli.mjs dev examples/architecture-small
 ```
 
 To create a shareable artifact:
 
 ```sh
-node skills/diagram-authoring/bin/cli.mjs build examples/architecture-small --out dist/architecture-small.html
+node skills/create-diagrams/bin/cli.mjs build examples/architecture-small --out dist/architecture-small.html
 ```
 
 Open the HTML directly in a browser. It contains its scripts, styles, templates, logos, and source data and works offline. Choose **Export SVG** or **Export PNG** for a static diagram. `check` and `build` validate source structure and asset paths. They do not verify browser rendering. A build reports `rendering: "not-verified"`.
@@ -75,7 +77,7 @@ Hover or focus the diagram for controls. On touch screens, tap **Diagram control
 
 ## Author a diagram
 
-A project contains `diagram.json`, optional `theme.css`, and optional SVG files in `templates/` and `logos/`. Start from [the v2 minimal example](../skills/diagram-authoring/assets/minimal-diagram.json) and read [the source format](../skills/diagram-authoring/references/source-format.md). Existing v1 sources stay v1 when edited and saved.
+A project contains `diagram.json`, optional `theme.css`, and optional SVG files in `templates/` and `logos/`. Start from [the v2 minimal example](../skills/create-diagrams/assets/minimal-diagram.json) and read [the source format](../skills/create-diagrams/references/source-format.md). Existing v1 sources stay v1 when edited and saved.
 
 Nodes are canonical records with stable IDs, titles, summaries, details, and optional source references. Architecture views select one fixed size preset, typed labeled connections, and nested boundaries. Flowcharts declare action, decision, start, and end roles and an ordered main path of edge IDs. Set `childViewId` for internal views. The source contains no coordinates.
 

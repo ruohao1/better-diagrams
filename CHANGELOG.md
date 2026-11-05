@@ -4,6 +4,10 @@ Changes are grouped by version. Version headings describe prepared contents; npm
 
 ## Unreleased
 
+### Changed
+
+- Renamed the agent skill from `diagram-authoring` to `create-diagrams`. Existing installations keep working; [install the new name before removing the old one](docs/guide.md#use-from-a-coding-agent).
+
 ## [0.2.0]
 
 ### Added

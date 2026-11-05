@@ -7,10 +7,10 @@ Architecture diagrams and flowcharts for coding agents. Automatic layout, clicka
 With Node.js 22.20 or later:
 
 ```sh
-npx skills add ruohao1/better-diagrams --skill diagram-authoring -g
+npx skills add ruohao1/better-diagrams --skill create-diagrams -g
 ```
 
-Select your agent, then ask it to use `diagram-authoring`. The skill includes its CLI. For direct terminal use: `npm install -g @isqrd/better-diagrams`.
+Select your agent, then ask it to use `create-diagrams`. The skill includes its CLI. For direct terminal use: `npm install -g @isqrd/better-diagrams`.
 
 ## Showcase
 
@@ -64,4 +64,4 @@ For live editing, run `better-diagrams dev my-diagram`.
 - Explain workflows with decisions, failures, and retry paths.
 - Keep an overview readable and open component internals in a modal.
 
-[Usage guide](docs/guide.md) · [Source format](skills/diagram-authoring/references/source-format.md) · [Changelog](CHANGELOG.md) · [Releases](https://github.com/ruohao1/better-diagrams/releases)
+[Usage guide](docs/guide.md) · [Source format](skills/create-diagrams/references/source-format.md) · [Changelog](CHANGELOG.md) · [Releases](https://github.com/ruohao1/better-diagrams/releases)

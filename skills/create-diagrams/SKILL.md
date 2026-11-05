@@ -1,9 +1,9 @@
 ---
-name: diagram-authoring
+name: create-diagrams
 description: Use when a coding agent needs to create or update interactive software architecture or workflow diagrams with Better Diagrams.
 ---
 
-# Diagram authoring
+# Create diagrams
 
 Author diagram source. Better Diagrams supplies layout, exploration, editing, and export.
 

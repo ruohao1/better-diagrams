@@ -33,7 +33,7 @@ test('CLI checks source and builds a self-contained artifact', async () => {
 test('CLI reports endpoint repair hints without changing source or writing an artifact', async () => {
   const dir=await mkdtemp(join(tmpdir(),'diagram-cli-invalid-'));
   try {
-    const document=JSON.parse(await readFile('skills/diagram-authoring/assets/minimal-diagram.json','utf8'));
+    const document=JSON.parse(await readFile('skills/create-diagrams/assets/minimal-diagram.json','utf8'));
     document.nodes.worker={label:'Worker',summary:'Sends notifications.',details:''};
     document.views.overview.edges[0].target='worker';
     const source=JSON.stringify(document),path=join(dir,'diagram.json'),out=join(dir,'diagram.html');
